@@ -1,0 +1,1897 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multiplicaventura</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #FFD700;
+  --gold-dark: #B8860B;
+  --purple: #7C3AED;
+  --purple-light: #A855F7;
+  --bg: #0F0A1E;
+  --bg2: #1A1035;
+  --bg3: #251848;
+  --text: #F0E6FF;
+  --text2: #B8A9D9;
+  --green: #22C55E;
+  --red: #EF4444;
+  --blue: #3B82F6;
+  --orange: #F97316;
+  --cyan: #06B6D4;
+  --pink: #EC4899;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, .title-font { font-family: 'Fredoka One', cursive; }
+
+/* Stars background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,0.15) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px);
+  background-size: 60px 60px, 37px 37px;
+  background-position: 0 0, 30px 30px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.screen { 
+  position: relative; 
+  z-index: 1; 
+  display: none; 
+  min-height: 100vh;
+  padding: 20px;
+}
+.screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+/* ===== HEADER BAR ===== */
+.hud {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(15,10,30,0.95);
+  border-bottom: 2px solid rgba(124,58,237,0.4);
+  padding: 10px 20px;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  backdrop-filter: blur(10px);
+}
+.hud.visible { display: flex; }
+
+.coins-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,215,0,0.15);
+  border: 1px solid rgba(255,215,0,0.4);
+  border-radius: 50px;
+  padding: 6px 14px;
+}
+.coin-icon { font-size: 20px; }
+.coins-count { font-size: 18px; font-weight: 800; color: var(--gold); font-family: 'Fredoka One', cursive; }
+
+.level-badge {
+  background: linear-gradient(135deg, var(--purple), var(--purple-light));
+  border-radius: 50px;
+  padding: 6px 16px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.xp-bar-wrap { display: flex; align-items: center; gap: 8px; }
+.xp-bar { width: 120px; height: 10px; background: rgba(255,255,255,0.1); border-radius: 99px; overflow: hidden; }
+.xp-fill { height: 100%; background: linear-gradient(90deg, #7C3AED, #EC4899); border-radius: 99px; transition: width 0.5s; }
+.xp-text { font-size: 12px; color: var(--text2); }
+
+/* ===== WELCOME SCREEN ===== */
+.logo-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(48px, 8vw, 80px);
+  background: linear-gradient(135deg, #FFD700, #FF8C00, #FF4500);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: none;
+  filter: drop-shadow(0 0 30px rgba(255,200,0,0.4));
+  line-height: 1;
+  text-align: center;
+}
+
+.logo-subtitle {
+  font-size: 18px;
+  color: var(--text2);
+  text-align: center;
+  margin: 10px 0 40px;
+}
+
+.character-parade {
+  display: flex;
+  gap: 20px;
+  margin: 30px 0;
+  justify-content: center;
+}
+
+.parade-char {
+  font-size: 56px;
+  animation: float 3s ease-in-out infinite;
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.5));
+}
+.parade-char:nth-child(2) { animation-delay: 0.5s; }
+.parade-char:nth-child(3) { animation-delay: 1s; }
+.parade-char:nth-child(4) { animation-delay: 1.5s; }
+
+@keyframes float {
+  0%,100% { transform: translateY(0px); }
+  50% { transform: translateY(-15px); }
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #7C3AED, #A855F7);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 16px 40px;
+  font-size: 20px;
+  font-family: 'Fredoka One', cursive;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 8px 30px rgba(124,58,237,0.5);
+  letter-spacing: 0.5px;
+}
+.btn-primary:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 12px 40px rgba(124,58,237,0.7); }
+.btn-primary:active { transform: scale(0.97); }
+
+.btn-secondary {
+  background: rgba(255,255,255,0.08);
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 50px;
+  padding: 12px 28px;
+  font-size: 16px;
+  font-family: 'Fredoka One', cursive;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-secondary:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); }
+
+.btn-gold {
+  background: linear-gradient(135deg, #FFD700, #FF8C00);
+  color: #1a0a00;
+  border: none;
+  border-radius: 50px;
+  padding: 16px 40px;
+  font-size: 20px;
+  font-family: 'Fredoka One', cursive;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 8px 30px rgba(255,165,0,0.5);
+}
+.btn-gold:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 12px 40px rgba(255,165,0,0.7); }
+
+/* ===== CARDS ===== */
+.card {
+  background: var(--bg2);
+  border: 1px solid rgba(124,58,237,0.3);
+  border-radius: 20px;
+  padding: 24px;
+}
+
+.card-glow {
+  background: var(--bg2);
+  border: 1px solid rgba(124,58,237,0.5);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 0 30px rgba(124,58,237,0.15);
+}
+
+/* ===== GAME MODE SELECT ===== */
+.mode-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  max-width: 600px;
+  width: 100%;
+}
+
+.mode-card {
+  background: var(--bg2);
+  border: 2px solid transparent;
+  border-radius: 20px;
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.mode-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.mode-card:hover { transform: translateY(-4px); }
+.mode-card:hover::before { opacity: 1; }
+
+.mode-card.purple { }
+.mode-card.purple:hover { border-color: var(--purple); box-shadow: 0 8px 30px rgba(124,58,237,0.4); }
+.mode-card.orange:hover { border-color: var(--orange); box-shadow: 0 8px 30px rgba(249,115,22,0.4); }
+.mode-card.cyan:hover { border-color: var(--cyan); box-shadow: 0 8px 30px rgba(6,182,212,0.4); }
+.mode-card.pink:hover { border-color: var(--pink); box-shadow: 0 8px 30px rgba(236,72,153,0.4); }
+
+.mode-icon { font-size: 48px; margin-bottom: 10px; }
+.mode-title { font-family: 'Fredoka One', cursive; font-size: 20px; margin-bottom: 6px; }
+.mode-desc { font-size: 13px; color: var(--text2); }
+.mode-reward { 
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(255,215,0,0.15);
+  border: 1px solid rgba(255,215,0,0.3);
+  border-radius: 50px;
+  padding: 3px 10px;
+  font-size: 13px;
+  color: var(--gold);
+  font-weight: 700;
+  margin-top: 8px;
+}
+
+/* ===== QUIZ SCREEN ===== */
+.quiz-container {
+  max-width: 600px;
+  width: 100%;
+  padding-top: 80px;
+}
+
+.question-card {
+  background: var(--bg2);
+  border: 1px solid rgba(124,58,237,0.4);
+  border-radius: 24px;
+  padding: 40px;
+  text-align: center;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.question-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(ellipse at center, rgba(124,58,237,0.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.question-num {
+  font-size: 13px;
+  color: var(--text2);
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 99px;
+  margin-bottom: 30px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #7C3AED, #EC4899);
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+.question-text {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(36px, 7vw, 64px);
+  color: white;
+  margin-bottom: 8px;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.answers-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.answer-btn {
+  background: var(--bg3);
+  border: 2px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 20px;
+  font-size: 26px;
+  font-family: 'Fredoka One', cursive;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.answer-btn:hover:not(:disabled) {
+  border-color: var(--purple-light);
+  background: rgba(124,58,237,0.2);
+  transform: scale(1.03);
+}
+.answer-btn.correct {
+  border-color: var(--green);
+  background: rgba(34,197,94,0.25);
+  animation: pulseGreen 0.5s ease;
+}
+.answer-btn.wrong {
+  border-color: var(--red);
+  background: rgba(239,68,68,0.25);
+  animation: shakeWrong 0.4s ease;
+}
+.answer-btn:disabled { cursor: default; }
+
+@keyframes pulseGreen {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.07); }
+  100% { transform: scale(1); }
+}
+@keyframes shakeWrong {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+
+/* Streak / timer */
+.quiz-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.streak-display {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--orange);
+}
+
+.timer-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.timer-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.1s linear, background 0.3s;
+}
+
+/* Coin animation popup */
+.coin-popup {
+  position: fixed;
+  pointer-events: none;
+  font-family: 'Fredoka One', cursive;
+  font-size: 24px;
+  color: var(--gold);
+  z-index: 999;
+  animation: flyUp 1.2s ease forwards;
+  text-shadow: 0 0 10px rgba(255,215,0,0.8);
+}
+@keyframes flyUp {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-100px) scale(1.5); }
+}
+
+/* ===== RESULTS SCREEN ===== */
+.result-icon {
+  font-size: 80px;
+  animation: bounce 0.6s ease;
+}
+@keyframes bounce {
+  0% { transform: scale(0.5); }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.result-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
+  margin: 20px 0;
+}
+
+.stat-box {
+  background: var(--bg2);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 16px;
+  text-align: center;
+}
+.stat-value { font-family: 'Fredoka One', cursive; font-size: 28px; }
+.stat-label { font-size: 12px; color: var(--text2); margin-top: 4px; }
+
+.coins-earned-big {
+  font-family: 'Fredoka One', cursive;
+  font-size: 48px;
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  filter: drop-shadow(0 0 20px rgba(255,215,0,0.5));
+}
+
+/* ===== SHOP SCREEN ===== */
+.shop-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  background: var(--bg2);
+  border-radius: 50px;
+  padding: 6px;
+}
+.shop-tab {
+  flex: 1;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 50px;
+  background: transparent;
+  color: var(--text2);
+  font-family: 'Fredoka One', cursive;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.shop-tab.active {
+  background: var(--purple);
+  color: white;
+}
+
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+  max-width: 700px;
+  width: 100%;
+}
+
+.shop-item {
+  background: var(--bg2);
+  border: 2px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  padding: 20px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+}
+.shop-item:hover:not(.owned):not(.equipped) {
+  border-color: var(--gold);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(255,215,0,0.2);
+}
+.shop-item.owned {
+  border-color: rgba(34,197,94,0.5);
+  background: rgba(34,197,94,0.05);
+}
+.shop-item.equipped {
+  border-color: var(--purple);
+  background: rgba(124,58,237,0.1);
+  box-shadow: 0 0 20px rgba(124,58,237,0.3);
+}
+.shop-item.locked { opacity: 0.6; }
+
+.item-emoji { font-size: 52px; margin-bottom: 8px; display: block; }
+.item-name { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+.item-price {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(255,215,0,0.12);
+  border: 1px solid rgba(255,215,0,0.3);
+  border-radius: 50px;
+  padding: 3px 10px;
+  font-size: 13px;
+  color: var(--gold);
+  font-weight: 800;
+}
+.item-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--green);
+  color: white;
+  border-radius: 50px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.item-badge.equipped-badge { background: var(--purple); }
+.item-badge.locked-badge { background: rgba(255,255,255,0.2); }
+
+/* ===== CHARACTER DISPLAY ===== */
+.character-big {
+  font-size: 80px;
+  display: block;
+  filter: drop-shadow(0 8px 20px rgba(0,0,0,0.5));
+  margin: 10px 0;
+}
+
+.char-info {
+  text-align: center;
+  padding: 16px;
+}
+
+/* ===== MAP SCREEN ===== */
+.world-map {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 500px;
+  width: 100%;
+}
+
+.world-node {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--bg2);
+  border: 2px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  padding: 18px 24px;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+}
+.world-node:hover:not(.locked) {
+  border-color: var(--purple);
+  transform: translateX(8px);
+  box-shadow: 0 0 20px rgba(124,58,237,0.3);
+}
+.world-node.locked { opacity: 0.5; cursor: not-allowed; }
+.world-node.completed { border-color: rgba(34,197,94,0.4); }
+
+.node-icon { font-size: 40px; }
+.node-info { flex: 1; }
+.node-title { font-family: 'Fredoka One', cursive; font-size: 20px; }
+.node-desc { font-size: 13px; color: var(--text2); margin-top: 2px; }
+.node-stars { font-size: 20px; }
+.node-lock { font-size: 24px; }
+
+/* Navigation bar */
+.nav-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(15,10,30,0.97);
+  border-top: 2px solid rgba(124,58,237,0.3);
+  display: none;
+  align-items: center;
+  justify-content: space-around;
+  padding: 10px 20px;
+  backdrop-filter: blur(10px);
+}
+.nav-bar.visible { display: flex; }
+
+.nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: var(--text2);
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 12px;
+  transition: all 0.2s;
+  font-family: 'Nunito', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+}
+.nav-btn .nav-icon { font-size: 24px; }
+.nav-btn.active { color: var(--purple-light); background: rgba(124,58,237,0.15); }
+.nav-btn:hover { color: white; }
+
+/* ===== NOTIFICATIONS ===== */
+.notification {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  z-index: 500;
+  background: var(--bg2);
+  border: 1px solid rgba(124,58,237,0.5);
+  border-radius: 50px;
+  padding: 12px 24px;
+  font-weight: 700;
+  font-size: 16px;
+  opacity: 0;
+  transition: all 0.3s;
+  white-space: nowrap;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+}
+.notification.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ===== DAILY BONUS ===== */
+.daily-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin: 20px 0;
+}
+.daily-day {
+  background: var(--bg2);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 10px 6px;
+  text-align: center;
+  font-size: 12px;
+}
+.daily-day.claimed { border-color: var(--gold); background: rgba(255,215,0,0.1); }
+.daily-day.today { border-color: var(--purple); background: rgba(124,58,237,0.2); animation: pulseBorder 1.5s infinite; }
+.daily-coin { font-size: 20px; }
+.daily-amount { font-size: 13px; font-weight: 800; color: var(--gold); }
+
+@keyframes pulseBorder {
+  0%,100% { box-shadow: 0 0 0 0 rgba(124,58,237,0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(124,58,237,0); }
+}
+
+/* ===== FLASHCARDS ===== */
+.fc-table-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+.fc-table-btn {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  border: 2px solid rgba(255,255,255,0.12);
+  background: var(--bg2);
+  color: var(--text);
+  font-family: 'Fredoka One', cursive;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.fc-table-btn:hover { border-color: var(--purple); background: rgba(124,58,237,0.2); }
+.fc-table-btn.selected { border-color: var(--purple); background: rgba(124,58,237,0.35); color: white; }
+
+.flashcard-wrap {
+  perspective: 1000px;
+  width: 100%;
+  max-width: 360px;
+  height: 220px;
+  cursor: pointer;
+  margin: 0 auto 24px;
+}
+.flashcard-inner {
+  width: 100%; height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.4,0,0.2,1);
+}
+.flashcard-wrap.flipped .flashcard-inner { transform: rotateY(180deg); }
+
+.flashcard-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.flashcard-front {
+  background: var(--bg2);
+  border: 2px solid rgba(124,58,237,0.4);
+  box-shadow: 0 0 30px rgba(124,58,237,0.1);
+}
+.flashcard-back {
+  background: linear-gradient(135deg, rgba(34,197,94,0.15), rgba(6,182,212,0.1));
+  border: 2px solid rgba(34,197,94,0.5);
+  transform: rotateY(180deg);
+}
+.fc-question { font-family:'Fredoka One',cursive; font-size: 52px; color: white; }
+.fc-hint { font-size: 14px; color: var(--text2); margin-top: 10px; }
+.fc-answer { font-family:'Fredoka One',cursive; font-size: 64px; color: var(--green); }
+.fc-label { font-size: 14px; color: var(--text2); margin-top: 8px; }
+
+.fc-nav { display: flex; gap: 12px; align-items: center; justify-content: center; }
+.fc-nav-btn {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.15);
+  background: var(--bg2);
+  color: var(--text);
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex; align-items:center; justify-content:center;
+}
+.fc-nav-btn:hover { background: rgba(124,58,237,0.3); border-color: var(--purple); }
+.fc-counter { font-family:'Fredoka One',cursive; font-size:18px; color:var(--text2); min-width:60px; text-align:center; }
+
+.fc-progress-dots {
+  display: flex; gap: 6px; justify-content: center; margin-bottom: 16px; flex-wrap: wrap;
+}
+.fc-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: rgba(255,255,255,0.12);
+  transition: background 0.3s;
+  cursor: pointer;
+}
+.fc-dot.known { background: var(--green); }
+.fc-dot.active { background: var(--purple); transform: scale(1.3); }
+
+.fc-action-row { display: flex; gap: 10px; justify-content: center; margin-top: 16px; }
+.fc-know-btn {
+  padding: 10px 22px;
+  border-radius: 50px;
+  border: none;
+  font-family:'Fredoka One',cursive;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.fc-know-btn.yes { background: rgba(34,197,94,0.2); color: var(--green); border: 1px solid rgba(34,197,94,0.4); }
+.fc-know-btn.no  { background: rgba(239,68,68,0.15); color: var(--red);   border: 1px solid rgba(239,68,68,0.3); }
+.fc-know-btn:hover { transform: scale(1.05); }
+
+/* ===== CHARACTER + SKIN DISPLAY ===== */
+.char-with-skin {
+  position: relative;
+  display: inline-flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.char-skin-badge {
+  position: absolute;
+  bottom: 4px;
+  right: -6px;
+  font-size: 26px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+  animation: float 3s ease-in-out infinite;
+  animation-delay: 0.3s;
+}
+
+/* Responsiveness */
+@media (max-width: 500px) {
+  .mode-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .answers-grid { gap: 10px; }
+  .question-text { font-size: 40px; }
+  .shop-grid { grid-template-columns: repeat(2, 1fr); }
+  .daily-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+.screen-content {
+  width: 100%;
+  max-width: 700px;
+  padding-bottom: 90px;
+  padding-top: 20px;
+}
+
+.screen-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 32px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.section-label {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text2);
+  margin-bottom: 12px;
+}
+
+.separator {
+  height: 1px;
+  background: rgba(255,255,255,0.06);
+  margin: 20px 0;
+}
+
+.equipped-char-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--bg2);
+  border: 1px solid rgba(124,58,237,0.3);
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.tooltip-msg {
+  font-size: 13px;
+  color: var(--text2);
+  text-align: center;
+  margin-top: 8px;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: var(--text2);
+  cursor: pointer;
+  font-size: 28px;
+  padding: 8px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+.back-btn:hover { color: white; }
+
+.flex-row { display: flex; align-items: center; gap: 12px; }
+</style>
+</head>
+<body>
+
+<!-- HUD -->
+<div class="hud" id="hud">
+  <div class="coins-display">
+    <span class="coin-icon">🪙</span>
+    <span class="coins-count" id="hud-coins">0</span>
+  </div>
+  <div class="level-badge">Nivel <span id="hud-level">1</span></div>
+  <div class="xp-bar-wrap">
+    <div class="xp-bar"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+    <span class="xp-text" id="xp-text">0/100 XP</span>
+  </div>
+</div>
+
+<!-- NAV BAR -->
+<div class="nav-bar" id="nav-bar">
+  <button class="nav-btn active" onclick="showScreen('map')" id="nav-map">
+    <span class="nav-icon">🗺️</span>Jugar
+  </button>
+  <button class="nav-btn" onclick="showScreen('shop')" id="nav-shop">
+    <span class="nav-icon">🛒</span>Tienda
+  </button>
+  <button class="nav-btn" onclick="showScreen('flashcards')" id="nav-flashcards">
+    <span class="nav-icon">📇</span>Repasar
+  </button>
+  <button class="nav-btn" onclick="showScreen('profile')" id="nav-profile">
+    <span class="nav-icon">👤</span>Perfil
+  </button>
+</div>
+
+<!-- NOTIFICATION -->
+<div class="notification" id="notification"></div>
+
+<!-- ======== WELCOME SCREEN ======== -->
+<div class="screen active" id="screen-welcome">
+  <div style="text-align:center; max-width:500px;">
+    <div class="character-parade">
+      <span class="parade-char">🦁</span>
+      <span class="parade-char">🐉</span>
+      <span class="parade-char">🦊</span>
+      <span class="parade-char">🐺</span>
+    </div>
+    <h1 class="logo-title">✖ Multiplicaventura</h1>
+    <p class="logo-subtitle">¡Aprende las tablas y conquista el mundo!</p>
+    <div style="margin: 30px 0;">
+      <button class="btn-primary" onclick="startApp()" style="width:220px; margin-bottom:12px; display:block; margin-left:auto; margin-right:auto;">
+        🚀 ¡Comenzar!
+      </button>
+      <button class="btn-secondary" onclick="continueGame()" style="width:220px;">
+        📖 Continuar
+      </button>
+    </div>
+    <p style="font-size:13px; color:var(--text2);">Para alumnos de 4° básico 🎒</p>
+  </div>
+</div>
+
+<!-- ======== NAME SCREEN ======== -->
+<div class="screen" id="screen-name">
+  <div style="text-align:center; max-width:400px;">
+    <div style="font-size:64px; margin-bottom:20px;">✨</div>
+    <h2 style="font-family:'Fredoka One',cursive; font-size:32px; margin-bottom:12px;">¡Hola, aventurero!</h2>
+    <p style="color:var(--text2); margin-bottom:28px;">¿Cómo te llamas?</p>
+    <input type="text" id="player-name-input" placeholder="Tu nombre aquí..." 
+      style="width:100%; padding:16px 20px; font-size:20px; font-family:'Fredoka One',cursive;
+             background:var(--bg2); border:2px solid rgba(124,58,237,0.5); 
+             border-radius:16px; color:white; outline:none; text-align:center; margin-bottom:20px;"
+      maxlength="20" onkeydown="if(event.key==='Enter') saveName()">
+    <button class="btn-primary" onclick="saveName()" style="width:200px;">¡Listo! →</button>
+  </div>
+</div>
+
+<!-- ======== DAILY BONUS SCREEN ======== -->
+<div class="screen" id="screen-daily">
+  <div style="text-align:center; max-width:500px;">
+    <div style="font-size:64px; margin-bottom:16px;">🎁</div>
+    <h2 style="font-family:'Fredoka One',cursive; font-size:32px; margin-bottom:8px;">¡Bienvenido de vuelta!</h2>
+    <p style="color:var(--text2); margin-bottom:24px;">Tu recompensa diaria</p>
+    <div class="daily-grid" id="daily-grid"></div>
+    <div style="margin: 20px 0; font-family:'Fredoka One',cursive; font-size:28px; color:var(--gold);" id="daily-reward-text"></div>
+    <button class="btn-gold" onclick="claimDaily()" id="daily-claim-btn" style="width:200px;">
+      🎉 ¡Reclamar!
+    </button>
+  </div>
+</div>
+
+<!-- ======== MAP SCREEN ======== -->
+<div class="screen" id="screen-map" style="padding-top:80px; padding-bottom:90px;">
+  <div class="screen-content" style="display:flex; flex-direction:column; align-items:center;">
+    <h2 class="screen-title">🗺️ Mapa del Mundo</h2>
+    <div class="world-map" id="world-map"></div>
+  </div>
+</div>
+
+<!-- ======== MODE SELECT ======== -->
+<div class="screen" id="screen-mode">
+  <div style="text-align:center; max-width:640px; padding-top:80px; padding-bottom:90px;">
+    <div class="flex-row" style="justify-content:flex-start; margin-bottom:24px;">
+      <button class="back-btn" onclick="showScreen('map')">←</button>
+      <h2 id="mode-world-title" style="font-family:'Fredoka One',cursive; font-size:24px;"></h2>
+    </div>
+    <div class="mode-grid" id="mode-grid">
+      <div class="mode-card purple" onclick="startGame('classic')">
+        <div class="mode-icon">🎯</div>
+        <div class="mode-title">Clásico</div>
+        <div class="mode-desc">10 preguntas, responde con calma</div>
+        <div class="mode-reward">🪙 5-15</div>
+      </div>
+      <div class="mode-card orange" onclick="startGame('speed')">
+        <div class="mode-icon">⚡</div>
+        <div class="mode-title">Velocidad</div>
+        <div class="mode-desc">¡Contrarreloj! 15 segundos por pregunta</div>
+        <div class="mode-reward">🪙 10-25</div>
+      </div>
+      <div class="mode-card cyan" onclick="startGame('survival')">
+        <div class="mode-icon">❤️</div>
+        <div class="mode-title">Supervivencia</div>
+        <div class="mode-desc">Tienes 3 vidas, ¡no falles!</div>
+        <div class="mode-reward">🪙 15-40</div>
+      </div>
+      <div class="mode-card pink" onclick="startGame('challenge')">
+        <div class="mode-icon">👑</div>
+        <div class="mode-title">Desafío</div>
+        <div class="mode-desc">20 preguntas difíciles, máximas monedas</div>
+        <div class="mode-reward">🪙 20-60</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== QUIZ SCREEN ======== -->
+<div class="screen" id="screen-quiz" style="padding-top:70px;">
+  <div class="quiz-container">
+    <div class="quiz-meta">
+      <div class="streak-display" id="streak-display">🔥 0</div>
+      <div id="lives-display" style="font-size:22px;"></div>
+      <div style="font-size:14px; color:var(--text2);" id="question-counter">1/10</div>
+    </div>
+    <div class="timer-bar" id="timer-bar-wrap" style="display:none; margin-bottom:10px;">
+      <div class="timer-fill" id="timer-fill" style="width:100%; background:var(--green);"></div>
+    </div>
+    <div class="question-card">
+      <div class="progress-bar"><div class="progress-fill" id="q-progress" style="width:0%"></div></div>
+      <div class="question-num" id="q-table-label">Tabla del 6</div>
+      <div class="question-text" id="question-text">6 × 7 = ?</div>
+    </div>
+    <div class="answers-grid" id="answers-grid"></div>
+  </div>
+</div>
+
+<!-- ======== RESULTS SCREEN ======== -->
+<div class="screen" id="screen-results">
+  <div style="text-align:center; max-width:400px; padding-bottom:90px;">
+    <div class="result-icon" id="result-icon">🏆</div>
+    <h2 style="font-family:'Fredoka One',cursive; font-size:36px; margin:16px 0 8px;" id="result-title">¡Increíble!</h2>
+    <p style="color:var(--text2); margin-bottom:20px;" id="result-subtitle">Has completado el nivel</p>
+    <div class="coins-earned-big" style="justify-content:center; margin-bottom:24px;">
+      <span>🪙</span>
+      <span id="coins-earned-display">+25</span>
+    </div>
+    <div class="result-stats">
+      <div class="stat-box">
+        <div class="stat-value" id="res-correct" style="color:var(--green);">0</div>
+        <div class="stat-label">✅ Correctas</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="res-wrong" style="color:var(--red);">0</div>
+        <div class="stat-label">❌ Errores</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="res-streak" style="color:var(--orange);">0</div>
+        <div class="stat-label">🔥 Racha</div>
+      </div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:12px; margin-top:24px;">
+      <button class="btn-primary" onclick="playAgain()">🔄 Jugar de nuevo</button>
+      <button class="btn-secondary" onclick="showScreen('map')">🗺️ Mapa del mundo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======== SHOP SCREEN ======== -->
+<div class="screen" id="screen-shop" style="padding-top:80px; padding-bottom:100px; align-items:flex-start;">
+  <div class="screen-content" style="display:flex; flex-direction:column; align-items:center;">
+    <h2 class="screen-title">🛒 Tienda</h2>
+    
+    <div class="equipped-char-display" style="width:100%; max-width:700px;">
+      <div id="shop-equipped-char" class="character-big">🐱</div>
+      <div style="font-family:'Fredoka One',cursive; font-size:18px;" id="shop-char-name">Sin personaje</div>
+      <div class="tooltip-msg" id="shop-char-skin">Skin: Predeterminado</div>
+    </div>
+
+    <div class="shop-tabs" style="width:100%; max-width:700px;">
+      <button class="shop-tab active" onclick="switchTab('characters')" id="tab-characters">🦁 Personajes</button>
+      <button class="shop-tab" onclick="switchTab('skins')" id="tab-skins">🎨 Skins</button>
+      <button class="shop-tab" onclick="switchTab('items')" id="tab-items">⭐ Artículos</button>
+    </div>
+
+    <div class="shop-grid" id="shop-grid"></div>
+  </div>
+</div>
+
+<!-- ======== PROFILE SCREEN ======== -->
+<div class="screen" id="screen-profile" style="padding-top:80px; padding-bottom:100px; align-items:flex-start;">
+  <div class="screen-content" style="display:flex; flex-direction:column; align-items:center;">
+    <h2 class="screen-title">👤 Mi Perfil</h2>
+    
+    <div style="background:var(--bg2); border:1px solid rgba(124,58,237,0.3); border-radius:20px; padding:28px; width:100%; max-width:400px; text-align:center; margin-bottom:20px;">
+      <span id="profile-char" style="font-size:80px; display:block; margin-bottom:12px;">🎮</span>
+      <div style="font-family:'Fredoka One',cursive; font-size:28px;" id="profile-name">Jugador</div>
+      <div style="color:var(--text2); margin-top:6px;" id="profile-char-name">Sin personaje equipado</div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; width:100%; max-width:400px; margin-bottom:20px;">
+      <div class="stat-box">
+        <div class="stat-value" id="prof-level" style="color:var(--purple-light);">1</div>
+        <div class="stat-label">⭐ Nivel</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="prof-coins" style="color:var(--gold);">0</div>
+        <div class="stat-label">🪙 Monedas</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="prof-correct" style="color:var(--green);">0</div>
+        <div class="stat-label">✅ Correctas</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="prof-best-streak" style="color:var(--orange);">0</div>
+        <div class="stat-label">🔥 Mejor Racha</div>
+      </div>
+    </div>
+
+    <div style="width:100%; max-width:400px;">
+      <div class="section-label">Tablas aprendidas</div>
+      <div id="tables-progress" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;"></div>
+    </div>
+
+    <div style="width:100%; max-width:400px; margin-top:8px;">
+      <button class="btn-secondary" onclick="resetGame()" style="width:100%; color:var(--red);">🗑️ Reiniciar juego</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======== FLASHCARDS SCREEN ======== -->
+<div class="screen" id="screen-flashcards" style="padding-top:80px; padding-bottom:100px; align-items:flex-start;">
+  <div class="screen-content" style="display:flex; flex-direction:column; align-items:center;">
+    <h2 class="screen-title">📇 Tarjetas de Repaso</h2>
+    <p style="color:var(--text2); text-align:center; margin-bottom:20px; font-size:15px;">Elige una tabla y toca la tarjeta para ver la respuesta</p>
+
+    <div class="fc-table-selector" id="fc-table-selector"></div>
+
+    <div class="fc-progress-dots" id="fc-dots"></div>
+
+    <div class="flashcard-wrap" id="flashcard-wrap" onclick="flipCard()">
+      <div class="flashcard-inner" id="flashcard-inner">
+        <div class="flashcard-face flashcard-front">
+          <div class="fc-question" id="fc-question">2 × 1</div>
+          <div class="fc-hint">👆 Toca para ver la respuesta</div>
+        </div>
+        <div class="flashcard-face flashcard-back">
+          <div class="fc-answer" id="fc-answer">2</div>
+          <div class="fc-label" id="fc-label">2 × 1 = 2</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fc-nav">
+      <button class="fc-nav-btn" onclick="fcPrev()">←</button>
+      <span class="fc-counter" id="fc-counter">1 / 10</span>
+      <button class="fc-nav-btn" onclick="fcNext()">→</button>
+    </div>
+
+    <div class="fc-action-row">
+      <button class="fc-know-btn no" onclick="fcMark(false)">❌ No lo sé</button>
+      <button class="fc-know-btn yes" onclick="fcMark(true)">✅ ¡Lo sé!</button>
+    </div>
+
+    <div style="margin-top:20px; background:var(--bg2); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:16px 20px; width:100%; max-width:360px; text-align:center;">
+      <div style="font-size:13px; color:var(--text2); margin-bottom:8px;">Tu progreso en esta tabla</div>
+      <div style="display:flex; justify-content:center; gap:20px;">
+        <div><span id="fc-known-count" style="font-family:'Fredoka One',cursive; font-size:24px; color:var(--green);">0</span><div style="font-size:12px;color:var(--text2);">✅ Sé</div></div>
+        <div><span id="fc-unknown-count" style="font-family:'Fredoka One',cursive; font-size:24px; color:var(--red);">0</span><div style="font-size:12px;color:var(--text2);">❌ Repaso</div></div>
+        <div><span id="fc-pending-count" style="font-family:'Fredoka One',cursive; font-size:24px; color:var(--text2);">10</span><div style="font-size:12px;color:var(--text2);">⬜ Pendiente</div></div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px; display:flex; gap:10px;">
+      <button class="btn-secondary" onclick="fcShuffle()" style="font-size:14px; padding:10px 18px;">🔀 Mezclar</button>
+      <button class="btn-secondary" onclick="fcReset()" style="font-size:14px; padding:10px 18px;">🔄 Reiniciar marcas</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+const CHARACTERS = [
+  { id:'cat',    emoji:'🐱', name:'Gatito Ninja',   price:0,    desc:'Tu compañero inicial', starter:true },
+  { id:'fox',    emoji:'🦊', name:'Zorro Veloz',    price:80,   desc:'Ágil como el viento' },
+  { id:'dragon', emoji:'🐉', name:'Dragón Sabio',   price:150,  desc:'Domina las tablas' },
+  { id:'wolf',   emoji:'🐺', name:'Lobo Guerrero',  price:200,  desc:'Nunca se rinde' },
+  { id:'lion',   emoji:'🦁', name:'León Rey',       price:300,  desc:'El más poderoso' },
+  { id:'robot',  emoji:'🤖', name:'Robot Matemático', price:400, desc:'Calculadora viviente' },
+  { id:'wizard', emoji:'🧙', name:'Mago de Números', price:500, desc:'Maestro del álgebra' },
+  { id:'dino',   emoji:'🦕', name:'Dino Genial',    price:350,  desc:'Antiguo y sabio' },
+];
+
+const SKINS = [
+  { id:'default', name:'Normal', emoji:'✨', price:0, charId:'any', desc:'Predeterminado' },
+  { id:'fire',    name:'Fuego',  emoji:'🔥', price:60,  charId:'any', desc:'¡Ardiente!' },
+  { id:'ice',     name:'Hielo',  emoji:'❄️', price:60,  charId:'any', desc:'Frío y genial' },
+  { id:'gold',    name:'Dorado', emoji:'⭐', price:100, charId:'any', desc:'Brilla con todo' },
+  { id:'rainbow', name:'Arcoíris',emoji:'🌈',price:120, charId:'any', desc:'Colorido y único' },
+  { id:'dark',    name:'Oscuro', emoji:'🌑', price:80,  charId:'any', desc:'Misterioso' },
+  { id:'magic',   name:'Mágico', emoji:'💫', price:150, charId:'any', desc:'Brilla con magia' },
+  { id:'cosmic',  name:'Cósmico',emoji:'🌌', price:200, charId:'any', desc:'Del espacio exterior' },
+];
+
+const ITEMS = [
+  { id:'xp2',     name:'XP x2',       emoji:'📚', price:80,  desc:'Doble XP por 3 partidas', effect:'xp' },
+  { id:'coins2',  name:'Monedas x2',  emoji:'💰', price:100, desc:'Doble monedas por 3 partidas', effect:'coins' },
+  { id:'life',    name:'Vida Extra',  emoji:'❤️', price:50,  desc:'1 vida extra en supervivencia', effect:'life' },
+  { id:'hint',    name:'Pista x3',    emoji:'💡', price:60,  desc:'3 pistas para respuestas difíciles', effect:'hint' },
+  { id:'shield',  name:'Escudo',      emoji:'🛡️', price:70,  desc:'Protege tu racha 1 vez', effect:'shield' },
+  { id:'magnet',  name:'Imán',        emoji:'🧲', price:90,  desc:'Atrae monedas extra', effect:'magnet' },
+];
+
+const WORLDS = [
+  { id:'w1', title:'Tierra del 2 y el 3', icon:'🌱', tables:[2,3], minLevel:1 },
+  { id:'w2', title:'Valle del 4 y el 5',  icon:'🌊', tables:[4,5], minLevel:2 },
+  { id:'w3', title:'Bosque del 6 y el 7', icon:'🌲', tables:[6,7], minLevel:3 },
+  { id:'w4', title:'Montaña del 8 y el 9',icon:'⛰️', tables:[8,9], minLevel:5 },
+  { id:'w5', title:'Mundo del 10, 11 y 12',icon:'🌟',tables:[10,11,12], minLevel:7 },
+];
+
+// ============================================================
+// GAME STATE
+// ============================================================
+const DEFAULT_STATE = {
+  name: '',
+  coins: 0,
+  xp: 0,
+  level: 1,
+  totalCorrect: 0,
+  bestStreak: 0,
+  ownedChars: ['cat'],
+  equippedChar: 'cat',
+  ownedSkins: ['default'],
+  equippedSkin: 'default',
+  ownedItems: {},
+  worldStars: {},
+  lastDaily: null,
+  dailyStreak: 0,
+  totalGames: 0,
+};
+
+let gs = JSON.parse(JSON.stringify(DEFAULT_STATE));
+
+function saveGs() { localStorage.setItem('multiadv_gs', JSON.stringify(gs)); }
+function loadGs() {
+  const s = localStorage.getItem('multiadv_gs');
+  if (s) gs = Object.assign(JSON.parse(JSON.stringify(DEFAULT_STATE)), JSON.parse(s));
+}
+
+// ============================================================
+// CURRENT GAME SESSION
+// ============================================================
+let session = {
+  mode: 'classic',
+  tables: [2,3],
+  worldId: 'w1',
+  questions: [],
+  current: 0,
+  correct: 0,
+  wrong: 0,
+  streak: 0,
+  maxStreak: 0,
+  lives: 3,
+  timerInterval: null,
+  timeLeft: 15,
+  answered: false,
+};
+
+function xpForLevel(lvl) { return lvl * 100; }
+
+function addCoins(n) {
+  if (gs.ownedItems['coins2'] > 0) n *= 2;
+  gs.coins += n;
+  updateHud();
+  saveGs();
+  return n;
+}
+
+function addXP(n) {
+  if (gs.ownedItems['xp2'] > 0) n *= 2;
+  gs.xp += n;
+  while (gs.xp >= xpForLevel(gs.level)) {
+    gs.xp -= xpForLevel(gs.level);
+    gs.level++;
+    showNotification(`🎉 ¡Subiste al nivel ${gs.level}!`, 3000);
+  }
+  updateHud();
+  saveGs();
+}
+
+// ============================================================
+// HUD
+// ============================================================
+function updateHud() {
+  document.getElementById('hud-coins').textContent = gs.coins;
+  document.getElementById('hud-level').textContent = gs.level;
+  const needed = xpForLevel(gs.level);
+  const pct = Math.min(100, Math.round(gs.xp / needed * 100));
+  document.getElementById('xp-fill').style.width = pct + '%';
+  document.getElementById('xp-text').textContent = `${gs.xp}/${needed} XP`;
+}
+
+function showHud(v) {
+  document.getElementById('hud').classList.toggle('visible', v);
+  document.getElementById('nav-bar').classList.toggle('visible', v);
+}
+
+// ============================================================
+// SCREENS
+// ============================================================
+function showScreen(id, updateNav=true) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  const hudScreens = ['map','mode','quiz','results','shop','profile','flashcards'];
+  showHud(hudScreens.includes(id));
+  if (updateNav) {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    const navMap = {map:'nav-map', shop:'nav-shop', profile:'nav-profile', flashcards:'nav-flashcards'};
+    if (navMap[id]) document.getElementById(navMap[id]).classList.add('active');
+  }
+  if (id === 'map') renderMap();
+  if (id === 'shop') renderShop('characters');
+  if (id === 'profile') renderProfile();
+  if (id === 'flashcards') { renderFcTableSelector(); initFlashcards(fcState.table); }
+  window.scrollTo(0,0);
+}
+
+// ============================================================
+// WELCOME / INIT
+// ============================================================
+function startApp() {
+  loadGs();
+  if (!gs.name) {
+    showScreen('name', false);
+    document.getElementById('hud').classList.remove('visible');
+    document.getElementById('nav-bar').classList.remove('visible');
+  } else {
+    checkDaily();
+  }
+}
+
+function continueGame() {
+  loadGs();
+  if (!gs.name) { startApp(); return; }
+  checkDaily();
+}
+
+function saveName() {
+  const n = document.getElementById('player-name-input').value.trim();
+  if (!n) return;
+  gs.name = n;
+  saveGs();
+  checkDaily();
+}
+
+// ============================================================
+// DAILY BONUS
+// ============================================================
+const DAILY_REWARDS = [20, 25, 30, 40, 50, 60, 100];
+
+function checkDaily() {
+  const today = new Date().toDateString();
+  if (gs.lastDaily === today) {
+    showScreen('map');
+    return;
+  }
+  renderDailyScreen();
+  showScreen('daily', false);
+  document.getElementById('hud').classList.remove('visible');
+  document.getElementById('nav-bar').classList.remove('visible');
+}
+
+function renderDailyScreen() {
+  const streak = Math.min(gs.dailyStreak, 6);
+  const grid = document.getElementById('daily-grid');
+  grid.innerHTML = '';
+  DAILY_REWARDS.forEach((r, i) => {
+    const div = document.createElement('div');
+    div.className = 'daily-day' + (i < streak ? ' claimed' : '') + (i === streak ? ' today' : '');
+    div.innerHTML = `<div class="daily-coin">🪙</div><div class="daily-amount">+${r}</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Día ${i+1}</div>`;
+    grid.appendChild(div);
+  });
+  document.getElementById('daily-reward-text').textContent = `+${DAILY_REWARDS[streak]} monedas 🎉`;
+}
+
+function claimDaily() {
+  const streak = Math.min(gs.dailyStreak, 6);
+  const reward = DAILY_REWARDS[streak];
+  gs.lastDaily = new Date().toDateString();
+  gs.dailyStreak = (gs.dailyStreak + 1) % 7;
+  gs.coins += reward;
+  updateHud();
+  saveGs();
+  showScreen('map');
+  showNotification(`🪙 +${reward} monedas de bonificación diaria!`, 3000);
+}
+
+// ============================================================
+// MAP
+// ============================================================
+function renderMap() {
+  const container = document.getElementById('world-map');
+  container.innerHTML = '';
+  WORLDS.forEach(w => {
+    const unlocked = gs.level >= w.minLevel;
+    const stars = gs.worldStars[w.id] || 0;
+    const div = document.createElement('div');
+    div.className = 'world-node' + (!unlocked ? ' locked' : '') + (stars > 0 ? ' completed' : '');
+    div.innerHTML = `
+      <span class="node-icon">${w.icon}</span>
+      <div class="node-info">
+        <div class="node-title">${w.title}</div>
+        <div class="node-desc">Tablas del ${w.tables.join(' y del ')} · Nivel ${w.minLevel}+</div>
+      </div>
+      <div>${unlocked ? (stars > 0 ? '⭐'.repeat(stars) + '☆'.repeat(3-stars) : '▶') : '🔒'}</div>
+    `;
+    if (unlocked) {
+      div.onclick = () => {
+        session.worldId = w.id;
+        session.tables = w.tables;
+        document.getElementById('mode-world-title').textContent = w.title;
+        showScreen('mode');
+      };
+    } else {
+      div.onclick = () => showNotification(`🔒 Necesitas nivel ${w.minLevel} para desbloquear`, 2500);
+    }
+    container.appendChild(div);
+  });
+}
+
+// ============================================================
+// QUIZ
+// ============================================================
+function generateQuestion(tables) {
+  const t = tables[Math.floor(Math.random() * tables.length)];
+  const n = Math.floor(Math.random() * 10) + 1;
+  const ans = t * n;
+  const wrongs = new Set();
+  while (wrongs.size < 3) {
+    let w = ans + (Math.floor(Math.random() * 8) - 4) * (Math.random() > 0.5 ? 1 : t);
+    if (w !== ans && w > 0) wrongs.add(w);
+  }
+  const opts = [ans, ...wrongs].sort(() => Math.random() - 0.5);
+  return { t, n, ans, opts, table: t };
+}
+
+function startGame(mode) {
+  session.mode = mode;
+  session.correct = 0;
+  session.wrong = 0;
+  session.streak = 0;
+  session.maxStreak = 0;
+  session.answered = false;
+  session.current = 0;
+  if (mode === 'survival') session.lives = 3;
+  const count = mode === 'challenge' ? 20 : 10;
+  session.questions = Array.from({length: count}, () => generateQuestion(session.tables));
+  showScreen('quiz');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = session.questions[session.current];
+  const total = session.questions.length;
+  document.getElementById('question-counter').textContent = `${session.current+1}/${total}`;
+  document.getElementById('q-progress').style.width = `${session.current/total*100}%`;
+  document.getElementById('q-table-label').textContent = `Tabla del ${q.table}`;
+  document.getElementById('question-text').textContent = `${q.t} × ${q.n} = ?`;
+  document.getElementById('streak-display').textContent = `🔥 ${session.streak}`;
+
+  // Lives
+  const livesEl = document.getElementById('lives-display');
+  if (session.mode === 'survival') {
+    livesEl.textContent = '❤️'.repeat(session.lives) + '🖤'.repeat(Math.max(0, 3-session.lives));
+  } else { livesEl.textContent = ''; }
+
+  // Answers
+  const grid = document.getElementById('answers-grid');
+  grid.innerHTML = '';
+  q.opts.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'answer-btn';
+    btn.textContent = opt;
+    btn.onclick = () => answer(btn, opt, q.ans);
+    grid.appendChild(btn);
+  });
+
+  session.answered = false;
+
+  // Timer for speed mode
+  const timerBar = document.getElementById('timer-bar-wrap');
+  const timerFill = document.getElementById('timer-fill');
+  clearInterval(session.timerInterval);
+  if (session.mode === 'speed') {
+    timerBar.style.display = 'block';
+    session.timeLeft = 15;
+    timerFill.style.width = '100%';
+    timerFill.style.background = 'var(--green)';
+    session.timerInterval = setInterval(() => {
+      session.timeLeft -= 0.1;
+      const pct = session.timeLeft / 15 * 100;
+      timerFill.style.width = pct + '%';
+      timerFill.style.background = pct > 50 ? 'var(--green)' : pct > 25 ? 'var(--orange)' : 'var(--red)';
+      if (session.timeLeft <= 0) {
+        clearInterval(session.timerInterval);
+        timeOut();
+      }
+    }, 100);
+  } else {
+    timerBar.style.display = 'none';
+  }
+}
+
+function timeOut() {
+  if (session.answered) return;
+  session.answered = true;
+  session.wrong++;
+  session.streak = 0;
+  document.getElementById('streak-display').textContent = `🔥 0`;
+  // Highlight correct
+  document.querySelectorAll('.answer-btn').forEach(btn => {
+    if (parseInt(btn.textContent) === session.questions[session.current].ans) {
+      btn.classList.add('correct');
+    }
+    btn.disabled = true;
+  });
+  if (session.mode === 'survival') {
+    session.lives--;
+    if (session.lives <= 0) { setTimeout(endGame, 800); return; }
+  }
+  setTimeout(nextQuestion, 1000);
+}
+
+function answer(btn, chosen, correct) {
+  if (session.answered) return;
+  session.answered = true;
+  clearInterval(session.timerInterval);
+
+  document.querySelectorAll('.answer-btn').forEach(b => b.disabled = true);
+
+  if (chosen === correct) {
+    btn.classList.add('correct');
+    session.correct++;
+    session.streak++;
+    if (session.streak > session.maxStreak) session.maxStreak = session.streak;
+    document.getElementById('streak-display').textContent = `🔥 ${session.streak}`;
+    spawnCoinAnim(btn, session.streak > 2 ? session.streak : 1);
+  } else {
+    btn.classList.add('wrong');
+    session.wrong++;
+    session.streak = 0;
+    document.getElementById('streak-display').textContent = `🔥 0`;
+    document.querySelectorAll('.answer-btn').forEach(b => {
+      if (parseInt(b.textContent) === correct) b.classList.add('correct');
+    });
+    if (session.mode === 'survival') {
+      session.lives--;
+      document.getElementById('lives-display').textContent = '❤️'.repeat(session.lives) + '🖤'.repeat(Math.max(0,3-session.lives));
+      if (session.lives <= 0) { setTimeout(endGame, 900); return; }
+    }
+  }
+  setTimeout(nextQuestion, chosen === correct ? 600 : 1200);
+}
+
+function nextQuestion() {
+  session.current++;
+  if (session.current >= session.questions.length) {
+    endGame();
+  } else {
+    renderQuestion();
+  }
+}
+
+function endGame() {
+  clearInterval(session.timerInterval);
+  const total = session.questions.length;
+  const pct = session.correct / total;
+
+  // Calculate coins
+  const base = { classic:10, speed:15, survival:20, challenge:25 };
+  const multiplier = pct >= 0.9 ? 1.5 : pct >= 0.7 ? 1.2 : 1;
+  const streakBonus = session.maxStreak >= 5 ? 10 : session.maxStreak >= 3 ? 5 : 0;
+  let earned = Math.round((base[session.mode] + session.correct * 2 + streakBonus) * multiplier);
+  earned = addCoins(earned);
+  addXP(session.correct * 10 + streakBonus * 5);
+
+  // Update stats
+  gs.totalCorrect += session.correct;
+  if (session.maxStreak > gs.bestStreak) gs.bestStreak = session.maxStreak;
+  gs.totalGames++;
+
+  // Stars
+  const stars = pct >= 0.9 ? 3 : pct >= 0.6 ? 2 : pct >= 0.3 ? 1 : 0;
+  const prev = gs.worldStars[session.worldId] || 0;
+  if (stars > prev) gs.worldStars[session.worldId] = stars;
+  saveGs();
+
+  // Result screen
+  const icons = pct >= 0.9 ? '🏆' : pct >= 0.6 ? '⭐' : pct >= 0.3 ? '😊' : '💪';
+  const titles = pct >= 0.9 ? '¡Eres un genio!' : pct >= 0.6 ? '¡Muy bien!' : pct >= 0.3 ? '¡Buen intento!' : '¡Sigue practicando!';
+  document.getElementById('result-icon').textContent = icons;
+  document.getElementById('result-title').textContent = titles;
+  document.getElementById('result-subtitle').textContent = `${session.correct}/${total} respuestas correctas`;
+  document.getElementById('coins-earned-display').textContent = `+${earned}`;
+  document.getElementById('res-correct').textContent = session.correct;
+  document.getElementById('res-wrong').textContent = session.wrong;
+  document.getElementById('res-streak').textContent = session.maxStreak;
+  showScreen('results');
+}
+
+function playAgain() { startGame(session.mode); }
+
+// ============================================================
+// COIN ANIMATION
+// ============================================================
+function spawnCoinAnim(el, n) {
+  const rect = el.getBoundingClientRect();
+  const pop = document.createElement('div');
+  pop.className = 'coin-popup';
+  pop.textContent = `+${n}🪙`;
+  pop.style.left = (rect.left + rect.width/2 - 20) + 'px';
+  pop.style.top = (rect.top + window.scrollY - 10) + 'px';
+  document.body.appendChild(pop);
+  setTimeout(() => pop.remove(), 1200);
+}
+
+// ============================================================
+// SHOP
+// ============================================================
+let currentTab = 'characters';
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.shop-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  renderShop(tab);
+}
+
+function getCharEmoji() {
+  const c = CHARACTERS.find(c => c.id === gs.equippedChar);
+  return c ? c.emoji : '❓';
+}
+
+function getSkinEmoji() {
+  const s = SKINS.find(s => s.id === gs.equippedSkin);
+  return (s && s.id !== 'default') ? s.emoji : '';
+}
+
+function renderShopHeader() {
+  const c = CHARACTERS.find(c => c.id === gs.equippedChar);
+  const s = SKINS.find(s => s.id === gs.equippedSkin);
+  const skinEmoji = getSkinEmoji();
+  // Build char+skin display
+  const charEl = document.getElementById('shop-equipped-char');
+  if (skinEmoji) {
+    charEl.innerHTML = `<div class="char-with-skin"><span style="font-size:80px;">${getCharEmoji()}</span><span class="char-skin-badge">${skinEmoji}</span></div>`;
+  } else {
+    charEl.innerHTML = `<span style="font-size:80px;">${getCharEmoji()}</span>`;
+  }
+  document.getElementById('shop-char-name').textContent = c ? c.name : 'Sin personaje';
+  document.getElementById('shop-char-skin').textContent = `Skin: ${s ? s.name : 'Predeterminado'}`;
+}
+
+function renderShop(tab) {
+  renderShopHeader();
+  const grid = document.getElementById('shop-grid');
+  grid.innerHTML = '';
+  const items = tab === 'characters' ? CHARACTERS : tab === 'skins' ? SKINS : ITEMS;
+
+  items.forEach(item => {
+    const owned = tab === 'characters' ? gs.ownedChars.includes(item.id) :
+                  tab === 'skins' ? gs.ownedSkins.includes(item.id) :
+                  (gs.ownedItems[item.id] || 0) > 0;
+    const equipped = tab === 'characters' ? gs.equippedChar === item.id :
+                     tab === 'skins' ? gs.equippedSkin === item.id : false;
+    const canBuy = gs.coins >= item.price;
+
+    const div = document.createElement('div');
+    div.className = 'shop-item' + (equipped ? ' equipped' : owned ? ' owned' : (!canBuy && !item.starter ? ' locked' : ''));
+
+    let badge = '';
+    if (equipped) badge = '<div class="item-badge equipped-badge">Equipado</div>';
+    else if (owned && tab !== 'items') badge = '<div class="item-badge">✓ Tienes</div>';
+    else if (!canBuy && !item.starter) badge = '<div class="item-badge locked-badge">🔒</div>';
+
+    const priceHTML = item.price === 0 ? `<span class="item-price">Gratis</span>` : 
+                      `<span class="item-price">🪙 ${item.price}</span>`;
+    const actionHTML = equipped ? `<div style="font-size:12px;color:var(--purple-light);margin-top:6px;">Equipado</div>` :
+                       owned && tab !== 'items' ? `<div style="font-size:12px;color:var(--green);margin-top:6px;cursor:pointer;">Equipar</div>` :
+                       tab === 'items' ? `<div style="font-size:12px;color:var(--text2);margin-top:6px;">x${gs.ownedItems[item.id]||0}</div>` : '';
+
+    div.innerHTML = `
+      ${badge}
+      <span class="item-emoji">${item.emoji}</span>
+      <div class="item-name">${item.name}</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:6px;">${item.desc}</div>
+      ${priceHTML}
+      ${actionHTML}
+    `;
+
+    div.onclick = () => handleShopClick(tab, item, owned, equipped);
+    grid.appendChild(div);
+  });
+}
+
+function handleShopClick(tab, item, owned, equipped) {
+  if (equipped) return;
+  if (owned && tab !== 'items') {
+    if (tab === 'characters') { gs.equippedChar = item.id; gs.equippedSkin = 'default'; }
+    if (tab === 'skins') gs.equippedSkin = item.id;
+    saveGs();
+    renderShop(tab);
+    showNotification(`✨ ${item.name} equipado!`, 2000);
+    return;
+  }
+  if (!owned || tab === 'items') {
+    if (item.price === 0 || item.starter) {
+      if (tab === 'characters') { gs.ownedChars.push(item.id); gs.equippedChar = item.id; }
+      if (tab === 'skins') { gs.ownedSkins.push(item.id); gs.equippedSkin = item.id; }
+      saveGs();
+      renderShop(tab);
+      return;
+    }
+    if (gs.coins < item.price) { showNotification(`❌ ¡Necesitas ${item.price} monedas!`, 2000); return; }
+    gs.coins -= item.price;
+    if (tab === 'characters') { gs.ownedChars.push(item.id); gs.equippedChar = item.id; gs.equippedSkin = 'default'; }
+    else if (tab === 'skins') { gs.ownedSkins.push(item.id); gs.equippedSkin = item.id; }
+    else { gs.ownedItems[item.id] = (gs.ownedItems[item.id] || 0) + 1; }
+    updateHud();
+    saveGs();
+    renderShop(tab);
+    showNotification(`🎉 ¡Compraste ${item.name}!`, 2500);
+  }
+}
+
+// ============================================================
+// PROFILE
+// ============================================================
+function renderProfile() {
+  const c = CHARACTERS.find(c => c.id === gs.equippedChar);
+  const skinEmoji = getSkinEmoji();
+  const profChar = document.getElementById('profile-char');
+  if (skinEmoji) {
+    profChar.innerHTML = `<div class="char-with-skin"><span style="font-size:80px;">${getCharEmoji()}</span><span class="char-skin-badge">${skinEmoji}</span></div>`;
+  } else {
+    profChar.innerHTML = `<span style="font-size:80px;">${getCharEmoji()}</span>`;
+  }
+  document.getElementById('profile-name').textContent = gs.name || 'Jugador';
+  document.getElementById('profile-char-name').textContent = c ? c.name : 'Sin personaje';
+  document.getElementById('prof-level').textContent = gs.level;
+  document.getElementById('prof-coins').textContent = gs.coins;
+  document.getElementById('prof-correct').textContent = gs.totalCorrect;
+  document.getElementById('prof-best-streak').textContent = gs.bestStreak;
+
+  const tablesEl = document.getElementById('tables-progress');
+  tablesEl.innerHTML = '';
+  [2,3,4,5,6,7,8,9,10,11,12].forEach(t => {
+    const span = document.createElement('span');
+    const played = WORLDS.some(w => w.tables.includes(t) && (gs.worldStars[w.id] || 0) > 0);
+    span.style.cssText = `background:${played ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.06)'};
+      border:1px solid ${played ? 'rgba(34,197,94,0.5)' : 'rgba(255,255,255,0.1)'};
+      border-radius:8px; padding:6px 12px; font-weight:700; font-size:16px;
+      color:${played ? 'var(--green)' : 'var(--text2)'};`;
+    span.textContent = `×${t}`;
+    tablesEl.appendChild(span);
+  });
+}
+
+function resetGame() {
+  if (!confirm('¿Seguro que quieres reiniciar todo? Se perderá tu progreso.')) return;
+  localStorage.removeItem('multiadv_gs');
+  gs = JSON.parse(JSON.stringify(DEFAULT_STATE));
+  showScreen('welcome', false);
+  showHud(false);
+}
+
+// ============================================================
+// NOTIFICATION
+// ============================================================
+let notifTimeout;
+function showNotification(msg, dur=2000) {
+  const el = document.getElementById('notification');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(notifTimeout);
+  notifTimeout = setTimeout(() => el.classList.remove('show'), dur);
+}
+
+// ============================================================
+// FLASHCARDS
+// ============================================================
+let fcState = {
+  table: 2,
+  cards: [],
+  current: 0,
+  flipped: false,
+  known: new Set(),
+  unknown: new Set(),
+};
+
+function buildFcCards(t) {
+  return Array.from({length:10}, (_,i) => ({ n: i+1, ans: t*(i+1), table: t }));
+}
+
+function initFlashcards(t) {
+  fcState.table = t;
+  fcState.cards = buildFcCards(t);
+  fcState.current = 0;
+  fcState.flipped = false;
+  fcState.known = new Set();
+  fcState.unknown = new Set();
+  const wrap = document.getElementById('flashcard-wrap');
+  if (wrap) wrap.classList.remove('flipped');
+  renderFcCard();
+  renderFcDots();
+  renderFcStats();
+}
+
+function renderFcCard() {
+  const c = fcState.cards[fcState.current];
+  if (!c) return;
+  document.getElementById('fc-question').textContent = `${c.table} × ${c.n}`;
+  document.getElementById('fc-answer').textContent = c.ans;
+  document.getElementById('fc-label').textContent = `${c.table} × ${c.n} = ${c.ans}`;
+  document.getElementById('fc-counter').textContent = `${fcState.current+1} / ${fcState.cards.length}`;
+  fcState.flipped = false;
+  document.getElementById('flashcard-wrap').classList.remove('flipped');
+}
+
+function renderFcDots() {
+  const container = document.getElementById('fc-dots');
+  if (!container) return;
+  container.innerHTML = '';
+  fcState.cards.forEach((c, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'fc-dot' + (fcState.known.has(i) ? ' known' : '') + (i === fcState.current ? ' active' : '');
+    dot.onclick = (e) => { e.stopPropagation(); fcState.current = i; renderFcCard(); renderFcDots(); };
+    container.appendChild(dot);
+  });
+}
+
+function renderFcStats() {
+  const kEl = document.getElementById('fc-known-count');
+  const uEl = document.getElementById('fc-unknown-count');
+  const pEl = document.getElementById('fc-pending-count');
+  if (!kEl) return;
+  kEl.textContent = fcState.known.size;
+  uEl.textContent = fcState.unknown.size;
+  pEl.textContent = fcState.cards.length - fcState.known.size - fcState.unknown.size;
+}
+
+function flipCard() {
+  fcState.flipped = !fcState.flipped;
+  document.getElementById('flashcard-wrap').classList.toggle('flipped', fcState.flipped);
+}
+
+function fcNext() {
+  fcState.current = (fcState.current + 1) % fcState.cards.length;
+  renderFcCard();
+  renderFcDots();
+}
+
+function fcPrev() {
+  fcState.current = (fcState.current - 1 + fcState.cards.length) % fcState.cards.length;
+  renderFcCard();
+  renderFcDots();
+}
+
+function fcMark(know) {
+  const i = fcState.current;
+  if (know) { fcState.known.add(i); fcState.unknown.delete(i); }
+  else { fcState.unknown.add(i); fcState.known.delete(i); }
+  renderFcDots();
+  renderFcStats();
+  if (know && fcState.known.size === fcState.cards.length) {
+    showNotification(`🎉 ¡Dominaste la tabla del ${fcState.table}!`, 3000);
+  }
+  setTimeout(fcNext, 300);
+}
+
+function fcShuffle() {
+  fcState.cards = [...fcState.cards].sort(() => Math.random() - 0.5);
+  fcState.current = 0;
+  fcState.known = new Set();
+  fcState.unknown = new Set();
+  renderFcCard();
+  renderFcDots();
+  renderFcStats();
+}
+
+function fcReset() {
+  fcState.known = new Set();
+  fcState.unknown = new Set();
+  renderFcDots();
+  renderFcStats();
+}
+
+function renderFcTableSelector() {
+  const container = document.getElementById('fc-table-selector');
+  if (!container) return;
+  container.innerHTML = '';
+  [2,3,4,5,6,7,8,9,10,11,12].forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'fc-table-btn' + (t === fcState.table ? ' selected' : '');
+    btn.textContent = `×${t}`;
+    btn.onclick = () => {
+      document.querySelectorAll('.fc-table-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      initFlashcards(t);
+    };
+    container.appendChild(btn);
+  });
+}
+
+// ============================================================
+// BOOT
+// ============================================================
+loadGs();
+updateHud();
+
+// Give starter character if not present
+if (!gs.ownedChars.includes('cat')) gs.ownedChars.push('cat');
+if (!gs.equippedChar) gs.equippedChar = 'cat';
+saveGs();
+</script>
+</body>
+</html>
