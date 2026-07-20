@@ -255,7 +255,7 @@ body::before {
 .quiz-container {
   max-width: 600px;
   width: 100%;
-  padding-top: 80px;
+  padding-top: 12px;
 }
 
 .question-card {
@@ -449,21 +449,23 @@ body::before {
 /* ===== SHOP SCREEN ===== */
 .shop-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 24px;
   background: var(--bg2);
-  border-radius: 50px;
+  border-radius: 24px;
   padding: 6px;
 }
 .shop-tab {
   flex: 1;
-  padding: 10px 20px;
+  padding: 10px 12px;
   border: none;
   border-radius: 50px;
   background: transparent;
   color: var(--text2);
   font-family: 'Fredoka One', cursive;
-  font-size: 16px;
+  font-size: 15px;
+  white-space: nowrap;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -890,6 +892,11 @@ body::before {
   .question-text { font-size: 40px; }
   .shop-grid { grid-template-columns: repeat(2, 1fr); }
   .daily-grid { grid-template-columns: repeat(4, 1fr); }
+  .shop-tab { flex: 1 1 45%; font-size: 14px; padding: 8px 6px; }
+  .pad-btn { height: 48px; font-size: 20px; }
+  .question-card { padding: 20px; margin-bottom: 14px; }
+  .question-text { min-height: 60px; }
+  .typed-display { min-height: 56px; font-size: 32px; }
 }
 
 .screen-content {
@@ -1090,7 +1097,7 @@ body::before {
 </div>
 
 <!-- ======== QUIZ SCREEN ======== -->
-<div class="screen" id="screen-quiz" style="padding-top:70px;">
+<div class="screen" id="screen-quiz" style="padding-top:70px; padding-bottom:110px; justify-content:flex-start;">
   <div class="quiz-container">
     <div class="quiz-meta">
       <div class="streak-display" id="streak-display">🔥 0</div>
