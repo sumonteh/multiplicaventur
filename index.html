@@ -783,6 +783,41 @@ body::before {
   animation-delay: 0.3s;
 }
 
+/* ===== PIXEL ART REWARDS ===== */
+.pixel-art { display: inline-block; line-height: 0; }
+.pixel-art svg { image-rendering: pixelated; }
+.shop-item .pixel-art { margin-bottom: 8px; }
+
+.new-reward-box {
+  display: none;
+  background: rgba(255,215,0,0.08);
+  border: 2px solid rgba(255,215,0,0.45);
+  border-radius: 20px;
+  padding: 16px;
+  margin-bottom: 20px;
+  animation: bounce 0.6s ease;
+}
+.new-reward-box .pixel-art { filter: drop-shadow(0 0 14px rgba(255,215,0,0.5)); }
+.new-reward-title { font-size: 13px; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
+.new-reward-name { font-family: 'Fredoka One', cursive; font-size: 20px; margin-top: 8px; }
+
+.reward-collect-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.reward-cell {
+  background: var(--bg2);
+  border: 1px solid rgba(255,215,0,0.3);
+  border-radius: 14px;
+  padding: 10px 6px;
+  text-align: center;
+}
+.reward-cell.locked-reward { border-color: rgba(255,255,255,0.08); }
+.reward-cell.locked-reward .pixel-art { filter: grayscale(1) brightness(0.35); }
+.reward-cell .reward-name { font-size: 11px; color: var(--text2); margin-top: 6px; font-weight: 700; }
+
 /* Responsiveness */
 @media (max-width: 500px) {
   .mode-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -1013,6 +1048,7 @@ body::before {
       <span>🪙</span>
       <span id="coins-earned-display">+25</span>
     </div>
+    <div class="new-reward-box" id="new-reward-box"></div>
     <div class="result-stats">
       <div class="stat-box">
         <div class="stat-value" id="res-correct" style="color:var(--green);">0</div>
@@ -1049,6 +1085,7 @@ body::before {
       <button class="shop-tab active" onclick="switchTab('characters')" id="tab-characters">🦁 Personajes</button>
       <button class="shop-tab" onclick="switchTab('skins')" id="tab-skins">🎨 Skins</button>
       <button class="shop-tab" onclick="switchTab('items')" id="tab-items">⭐ Artículos</button>
+      <button class="shop-tab" onclick="switchTab('rewards')" id="tab-rewards">🏅 Premios</button>
     </div>
 
     <div class="shop-grid" id="shop-grid"></div>
@@ -1088,6 +1125,12 @@ body::before {
     <div style="width:100%; max-width:400px;">
       <div class="section-label">Tablas aprendidas</div>
       <div id="tables-progress" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;"></div>
+    </div>
+
+    <div style="width:100%; max-width:400px;">
+      <div class="section-label">🏅 Mis Premios (<span id="rewards-count">0</span>/<span id="rewards-total">0</span>)</div>
+      <div class="reward-collect-grid" id="rewards-collection"></div>
+      <p class="tooltip-msg" style="margin-bottom:12px;">Gana premios con partidas perfectas o cómpralos en la tienda</p>
     </div>
 
     <div style="width:100%; max-width:400px; margin-top:8px;">
@@ -1181,6 +1224,152 @@ const ITEMS = [
   { id:'magnet',  name:'Imán',        emoji:'🧲', price:90,  desc:'Atrae monedas extra', effect:'magnet' },
 ];
 
+// Premios coleccionables en pixel art. Cada grid es una matriz de caracteres
+// que se mapean a colores; '.' es transparente.
+const PIXEL_REWARDS = [
+  { id:'trophy', name:'Copa Dorada', desc:'Para campeones de las tablas', price:120,
+    colors:{ G:'#FFD700', W:'#FFF6B0', D:'#B8860B' },
+    grid:[
+      '............',
+      '.G........G.',
+      '.GGGGGGGGGG.',
+      '.G.GWWGGG.G.',
+      '.G.GWGGGG.G.',
+      '.GG.GGGG.GG.',
+      '....GGGG....',
+      '.....GG.....',
+      '.....GG.....',
+      '....GGGG....',
+      '..DDDDDDDD..',
+      '............',
+    ]},
+  { id:'gem', name:'Gema Púrpura', desc:'Brilla con sabiduría', price:100,
+    colors:{ L:'#A855F7', P:'#7C3AED', W:'#E9D5FF' },
+    grid:[
+      '............',
+      '...LLLLLL...',
+      '..LWLLLLPL..',
+      '.LWWLLLLLPP.',
+      '.LLLLLLLLPP.',
+      '.LLLLLLLLPP.',
+      '..LLLLLLPP..',
+      '...LLLLPP...',
+      '....LLPP....',
+      '.....LP.....',
+      '............',
+      '............',
+    ]},
+  { id:'crown', name:'Corona Real', desc:'Del rey de las multiplicaciones', price:200,
+    colors:{ G:'#FFD700', R:'#EF4444', B:'#3B82F6' },
+    grid:[
+      '............',
+      '............',
+      '.G...GG...G.',
+      '.GG..GG..GG.',
+      '.GGG.GG.GGG.',
+      '.GGGGGGGGGG.',
+      '.GGGGGGGGGG.',
+      '.GRGGBBGGRG.',
+      '.GGGGGGGGGG.',
+      '............',
+      '............',
+      '............',
+    ]},
+  { id:'star', name:'Estrella Fugaz', desc:'Pide un deseo matemático', price:80,
+    colors:{ Y:'#FDE047', O:'#F97316' },
+    grid:[
+      '............',
+      '.....YY.....',
+      '.....YY.....',
+      '....YYYY....',
+      '.YYYYYYYYYY.',
+      '..YYYYYYYY..',
+      '...YYYYYY...',
+      '...YYYYYY...',
+      '..YYY..YYY..',
+      '..YO....OY..',
+      '.O........O.',
+      '............',
+    ]},
+  { id:'medal', name:'Medalla Campeón', desc:'Primer lugar asegurado', price:90,
+    colors:{ R:'#EF4444', G:'#FFD700', W:'#FFF6B0' },
+    grid:[
+      '............',
+      '..RR....RR..',
+      '..RRR..RRR..',
+      '...RRRRRR...',
+      '....RRRR....',
+      '....GGGG....',
+      '...GGGGGG...',
+      '..GGGWGGGG..',
+      '..GGWGGGGG..',
+      '...GGGGGG...',
+      '....GGGG....',
+      '............',
+    ]},
+  { id:'chest', name:'Cofre del Tesoro', desc:'Lleno de conocimiento', price:150,
+    colors:{ B:'#A0622D', D:'#6B3E1A', G:'#FFD700' },
+    grid:[
+      '............',
+      '............',
+      '..BBBBBBBB..',
+      '.BDDDDDDDDB.',
+      '.BBBBBBBBBB.',
+      '.DDDDGGDDDD.',
+      '.BBBBGGBBBB.',
+      '.BBBBBBBBBB.',
+      '.BDDDDDDDDB.',
+      '.BBBBBBBBBB.',
+      '............',
+      '............',
+    ]},
+  { id:'rocket', name:'Cohete Espacial', desc:'A la velocidad del cálculo', price:180,
+    colors:{ R:'#EF4444', S:'#CBD5E1', W:'#3B82F6', F:'#F97316', Y:'#FDE047' },
+    grid:[
+      '............',
+      '.....RR.....',
+      '....RRRR....',
+      '....SSSS....',
+      '....SWWS....',
+      '....SWWS....',
+      '....SSSS....',
+      '...RSSSSR...',
+      '..RRSSSSRR..',
+      '..R.FFFF.R..',
+      '.....FF.....',
+      '.....YY.....',
+    ]},
+  { id:'heart', name:'Corazón Mágico', desc:'Amor por los números', price:70,
+    colors:{ R:'#EF4444', P:'#FCA5A5' },
+    grid:[
+      '............',
+      '..RR....RR..',
+      '.RPRR..RRRR.',
+      '.RPPRRRRRRR.',
+      '.RPRRRRRRRR.',
+      '.RRRRRRRRRR.',
+      '..RRRRRRRR..',
+      '...RRRRRR...',
+      '....RRRR....',
+      '.....RR.....',
+      '............',
+      '............',
+    ]},
+];
+
+function pixelSVG(reward, size=56) {
+  const rows = reward.grid;
+  const h = rows.length, w = rows[0].length;
+  let rects = '';
+  rows.forEach((row, y) => {
+    [...row].forEach((ch, x) => {
+      const c = reward.colors[ch];
+      if (c) rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${c}"/>`;
+    });
+  });
+  return `<span class="pixel-art"><svg viewBox="0 0 ${w} ${h}" width="${size}" height="${size}" shape-rendering="crispEdges">${rects}</svg></span>`;
+}
+
 const WORLDS = [
   { id:'w1', title:'Tierra del 2 y el 3', icon:'🌱', tables:[2,3], minLevel:1 },
   { id:'w2', title:'Valle del 4 y el 5',  icon:'🌊', tables:[4,5], minLevel:2 },
@@ -1204,6 +1393,7 @@ const DEFAULT_STATE = {
   ownedSkins: ['default'],
   equippedSkin: 'default',
   ownedItems: {},
+  ownedRewards: [],
   worldStars: {},
   lastDaily: null,
   dailyStreak: 0,
@@ -1564,7 +1754,30 @@ function endGame() {
   const stars = pct >= 0.9 ? 3 : pct >= 0.6 ? 2 : pct >= 0.3 ? 1 : 0;
   const prev = gs.worldStars[session.worldId] || 0;
   if (stars > prev) gs.worldStars[session.worldId] = stars;
+
+  // Partida perfecta: regala un premio pixel art que aún no tenga
+  let wonReward = null;
+  if (session.correct === total) {
+    const pool = PIXEL_REWARDS.filter(r => !gs.ownedRewards.includes(r.id));
+    if (pool.length > 0) {
+      wonReward = pool[Math.floor(Math.random() * pool.length)];
+      gs.ownedRewards.push(wonReward.id);
+    }
+  }
   saveGs();
+
+  const rewardBox = document.getElementById('new-reward-box');
+  if (wonReward) {
+    rewardBox.style.display = 'block';
+    rewardBox.innerHTML = `
+      <div class="new-reward-title">✨ ¡Premio nuevo desbloqueado! ✨</div>
+      ${pixelSVG(wonReward, 72)}
+      <div class="new-reward-name">${wonReward.name}</div>
+      <div style="font-size:13px; color:var(--text2);">${wonReward.desc}</div>
+    `;
+  } else {
+    rewardBox.style.display = 'none';
+  }
 
   // Result screen
   const icons = pct >= 0.9 ? '🏆' : pct >= 0.6 ? '⭐' : pct >= 0.3 ? '😊' : '💪';
@@ -1635,11 +1848,12 @@ function renderShop(tab) {
   renderShopHeader();
   const grid = document.getElementById('shop-grid');
   grid.innerHTML = '';
-  const items = tab === 'characters' ? CHARACTERS : tab === 'skins' ? SKINS : ITEMS;
+  const items = tab === 'characters' ? CHARACTERS : tab === 'skins' ? SKINS : tab === 'rewards' ? PIXEL_REWARDS : ITEMS;
 
   items.forEach(item => {
     const owned = tab === 'characters' ? gs.ownedChars.includes(item.id) :
                   tab === 'skins' ? gs.ownedSkins.includes(item.id) :
+                  tab === 'rewards' ? gs.ownedRewards.includes(item.id) :
                   (gs.ownedItems[item.id] || 0) > 0;
     const equipped = tab === 'characters' ? gs.equippedChar === item.id :
                      tab === 'skins' ? gs.equippedSkin === item.id : false;
@@ -1659,9 +1873,10 @@ function renderShop(tab) {
                        owned && tab !== 'items' ? `<div style="font-size:12px;color:var(--green);margin-top:6px;cursor:pointer;">Equipar</div>` :
                        tab === 'items' ? `<div style="font-size:12px;color:var(--text2);margin-top:6px;">x${gs.ownedItems[item.id]||0}</div>` : '';
 
+    const iconHTML = tab === 'rewards' ? pixelSVG(item, 52) : `<span class="item-emoji">${item.emoji}</span>`;
     div.innerHTML = `
       ${badge}
-      <span class="item-emoji">${item.emoji}</span>
+      ${iconHTML}
       <div class="item-name">${item.name}</div>
       <div style="font-size:11px;color:var(--text2);margin-bottom:6px;">${item.desc}</div>
       ${priceHTML}
@@ -1675,6 +1890,17 @@ function renderShop(tab) {
 
 function handleShopClick(tab, item, owned, equipped) {
   if (equipped) return;
+  if (tab === 'rewards') {
+    if (owned) { showNotification(`🏅 Ya tienes ${item.name}`, 2000); return; }
+    if (gs.coins < item.price) { showNotification(`❌ ¡Necesitas ${item.price} monedas!`, 2000); return; }
+    gs.coins -= item.price;
+    gs.ownedRewards.push(item.id);
+    updateHud();
+    saveGs();
+    renderShop(tab);
+    showNotification(`🎉 ¡Ganaste el premio ${item.name}!`, 2500);
+    return;
+  }
   if (owned && tab !== 'items') {
     if (tab === 'characters') { gs.equippedChar = item.id; gs.equippedSkin = 'default'; }
     if (tab === 'skins') gs.equippedSkin = item.id;
@@ -1733,6 +1959,18 @@ function renderProfile() {
       color:${played ? 'var(--green)' : 'var(--text2)'};`;
     span.textContent = `×${t}`;
     tablesEl.appendChild(span);
+  });
+
+  document.getElementById('rewards-count').textContent = gs.ownedRewards.length;
+  document.getElementById('rewards-total').textContent = PIXEL_REWARDS.length;
+  const rewardsEl = document.getElementById('rewards-collection');
+  rewardsEl.innerHTML = '';
+  PIXEL_REWARDS.forEach(r => {
+    const owned = gs.ownedRewards.includes(r.id);
+    const cell = document.createElement('div');
+    cell.className = 'reward-cell' + (owned ? '' : ' locked-reward');
+    cell.innerHTML = `${pixelSVG(r, 44)}<div class="reward-name">${owned ? r.name : '🔒 ???'}</div>`;
+    rewardsEl.appendChild(cell);
   });
 }
 
