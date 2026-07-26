@@ -1013,6 +1013,7 @@ input:focus-visible,
 .geometry-board-wrap { max-width:560px; margin:auto; }
 .geometry-board { display:block; width:100%; aspect-ratio:1; border-radius:15px; border:1px solid rgba(255,255,255,.15); overflow:hidden; }
 .geometry-board.interactive { cursor:crosshair; touch-action:none; }
+.geometry-board.interactive:focus-visible { outline:3px solid var(--gold); outline-offset:3px; }
 .geo-bg { fill:#111932; }
 .geo-grid { stroke:#34405f; stroke-width:1; }
 .geo-grid.geo-axis { stroke:#7582a5; stroke-width:2; }
@@ -1024,6 +1025,7 @@ input:focus-visible,
 .geo-vertex { fill:#08101f; stroke:#22d3ee; stroke-width:4; }
 .geo-vertex.final { stroke:#4ade80; }
 .geo-vertex.user { stroke:#fbbf24; }
+.geo-keyboard-cursor { fill:rgba(251,191,36,.3); stroke:#fff; stroke-width:3; stroke-dasharray:3 2; }
 .geo-label { fill:white; font:bold 14px Nunito,sans-serif; paint-order:stroke; stroke:#111932; stroke-width:4; }
 .geo-label.center { fill:#fbbf24; font-size:17px; }
 .geo-center-ring,.geo-center { fill:none; stroke:#fbbf24; stroke-width:4; }

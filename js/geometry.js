@@ -63,7 +63,7 @@ const ROTATION_DEMOS = [
     direction:'counterclockwise',
     helps:{ ghost:true, radii:true, paths:true },
     reward:0,
-    message:'Aunque el centro esté fuera, todos los vértices conservan su distancia al punto de giro.',
+    message:'Tres cuartos de giro son 270°. Aunque el centro esté fuera, cada vértice conserva su distancia al punto de giro.',
   },
 ];
 

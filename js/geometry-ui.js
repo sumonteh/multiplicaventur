@@ -4,6 +4,7 @@
 const GEO_VIEW = { size:480, min:-8, max:8, cell:30 };
 const geometrySession = {
   mode:'learn', index:0, attempts:0, selected:[], animation:null,
+  keyboardCursor:{x:0,y:0}, keyboardActive:false,
   lab:{ figure:'triangle', center:{x:0,y:0}, offset:{x:2,y:1}, angle:90,
     direction:'clockwise', grid:true, ghost:true, radii:true, paths:true, drag:null },
 };
@@ -48,7 +49,8 @@ function svgPoint(point, label, className='geo-vertex') {
 }
 
 function rotationBoard({vertices, center, transformed=null, userPoints=[], ghost=true,
-  radii=false, paths=false, grid=true, interactive=false, ariaLabel='Plano de rotación'}) {
+  radii=false, paths=false, grid=true, interactive=false, keyboardCursor=null,
+  ariaLabel='Plano de rotación'}) {
   const finalPoints = transformed || [];
   const centerScreen = modelToScreen(center);
   const pathMarkup = paths && finalPoints.length ? vertices.map((point, index) => {
@@ -63,7 +65,8 @@ function rotationBoard({vertices, center, transformed=null, userPoints=[], ghost
       ${finalPoints[index] ? `<line class="geo-radius final" x1="${centerScreen.x}" y1="${centerScreen.y}" x2="${b.x}" y2="${b.y}"/>` : ''}`;
   }).join('') : '';
   return `<svg class="geometry-board${interactive ? ' interactive' : ''}" viewBox="0 0 480 480"
-      role="img" aria-label="${ariaLabel}" ${interactive ? 'data-geometry-interactive="true"' : ''}>
+      role="${interactive ? 'application' : 'img'}" aria-label="${ariaLabel}"
+      ${interactive ? 'data-geometry-interactive="true" tabindex="0"' : ''}>
     <rect class="geo-bg" width="480" height="480"/>${svgGrid(grid)}${pathMarkup}${radiusMarkup}
     ${ghost ? `<polygon class="geo-shape ghost" points="${pointsAttr(vertices)}"/>` : ''}
     <polygon class="geo-shape initial" points="${pointsAttr(vertices)}"/>
@@ -72,6 +75,7 @@ function rotationBoard({vertices, center, transformed=null, userPoints=[], ghost
     ${vertices.map((p,i) => svgPoint(p, String.fromCharCode(65+i))).join('')}
     ${finalPoints.map((p,i) => svgPoint(p, `${String.fromCharCode(65+i)}′`, 'geo-vertex final')).join('')}
     ${userPoints.map((p,i) => svgPoint(p, `${i+1}`, 'geo-vertex user')).join('')}
+    ${keyboardCursor ? svgPoint(keyboardCursor, 'Cursor', 'geo-keyboard-cursor') : ''}
     <circle class="geo-center-ring" cx="${centerScreen.x}" cy="${centerScreen.y}" r="11"/>
     <line class="geo-center" x1="${centerScreen.x-13}" y1="${centerScreen.y}" x2="${centerScreen.x+13}" y2="${centerScreen.y}"/>
     <line class="geo-center" x1="${centerScreen.x}" y1="${centerScreen.y-13}" x2="${centerScreen.x}" y2="${centerScreen.y+13}"/>
@@ -107,6 +111,8 @@ function startGeometryMode(mode) {
   geometrySession.index = 0;
   geometrySession.attempts = 0;
   geometrySession.selected = [];
+  geometrySession.keyboardCursor = {x:0,y:0};
+  geometrySession.keyboardActive = false;
   gs.geometryProgress.currentMode = mode;
   saveGs();
   showScreen('geometry-activity');
@@ -180,8 +186,18 @@ function renderLearn(exercise, transformed=null) {
 function updateLearnControls() {
   geometrySession.currentAngle = Number(document.getElementById('geo-learn-angle').value);
   geometrySession.currentDirection = document.getElementById('geo-learn-direction').value;
+  document.getElementById('geometry-instruction').textContent =
+    learnRotationMessage(geometrySession.currentAngle, geometrySession.currentDirection);
   renderLearn(ROTATION_DEMOS[geometrySession.index]);
-  setGeometryFeedback('Puedes combinar cualquier cuarto de giro con ambos sentidos.', '');
+  setGeometryFeedback('Puedes probar cada giro en ambos sentidos.', '');
+}
+
+function learnRotationMessage(angle, direction) {
+  const turnName = {90:'Un cuarto de giro',180:'Un medio giro',270:'Tres cuartos de giro',360:'Un giro completo'}[angle];
+  const directionText = direction === 'clockwise'
+    ? 'horario, como las manecillas del reloj'
+    : 'antihorario, hacia el lado contrario';
+  return `${turnName} son ${angle}°. Observa el movimiento en sentido ${directionText}.`;
 }
 
 function animateGeometryExercise() {
@@ -239,16 +255,40 @@ function renderBuild(exercise) {
   document.getElementById('geometry-board-wrap').innerHTML = rotationBoard({
     vertices:exercise.vertices, center:exercise.center, userPoints:geometrySession.selected,
     ghost:true, radii:exercise.helps.radii, interactive:true,
-    ariaLabel:'Plano interactivo. Toca los vértices de la figura rotada en orden.',
+    keyboardCursor:geometrySession.keyboardActive ? geometrySession.keyboardCursor : null,
+    ariaLabel:'Plano interactivo. Toca la cuadrícula o usa las flechas y Enter para ubicar los vértices.',
   });
   const svg = document.querySelector('[data-geometry-interactive]');
-  svg.addEventListener('pointerdown', event => {
+  const addSelectedPoint = point => {
     if (geometrySession.selected.length >= exercise.vertices.length) return;
-    geometrySession.selected.push(screenToModel(svg, event));
+    geometrySession.selected.push(point);
     renderBuild(exercise);
+  };
+  svg.addEventListener('pointerdown', event => {
+    addSelectedPoint(screenToModel(svg, event));
+  });
+  svg.addEventListener('keydown', event => {
+    const movement = {
+      ArrowLeft:{x:-1,y:0}, ArrowRight:{x:1,y:0},
+      ArrowUp:{x:0,y:1}, ArrowDown:{x:0,y:-1},
+    }[event.key];
+    if (movement) {
+      event.preventDefault();
+      geometrySession.keyboardActive = true;
+      geometrySession.keyboardCursor = {
+        x:Math.max(GEO_VIEW.min,Math.min(GEO_VIEW.max,geometrySession.keyboardCursor.x+movement.x)),
+        y:Math.max(GEO_VIEW.min,Math.min(GEO_VIEW.max,geometrySession.keyboardCursor.y+movement.y)),
+      };
+      renderBuild(exercise);
+      document.querySelector('[data-geometry-interactive]').focus();
+    } else if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      addSelectedPoint({...geometrySession.keyboardCursor});
+      document.querySelector('[data-geometry-interactive]').focus();
+    }
   });
   document.getElementById('geometry-instruction').textContent =
-    `Marca ${exercise.vertices.length} vértices en orden. Giro: ${exercise.angle}° ${exercise.direction === 'clockwise' ? 'horario' : 'antihorario'}.`;
+    `Marca ${exercise.vertices.length} vértices en orden. Puedes tocar la cuadrícula o usar las flechas y Enter. Giro: ${exercise.angle}° ${exercise.direction === 'clockwise' ? 'horario' : 'antihorario'}.`;
   document.getElementById('geometry-actions').innerHTML =
     `<button class="btn-secondary" onclick="undoGeometryPoint()">↶ Deshacer</button>
      <button class="btn-primary" onclick="checkGeometryBuild()">✓ Comprobar</button>`;
@@ -356,18 +396,24 @@ function bindLabDrag() {
   svg.addEventListener('pointerdown', event => {
     const point = screenToModel(svg,event);
     geometrySession.lab.drag = pointDistance(point, geometrySession.lab.center) < 1.5 ? 'center' : 'shape';
-    svg.setPointerCapture(event.pointerId);
+    const move = moveEvent => {
+      if (!geometrySession.lab.drag) return;
+      const activeSvg = document.querySelector('[data-geometry-interactive]');
+      const nextPoint = screenToModel(activeSvg,moveEvent);
+      if (geometrySession.lab.drag === 'center') geometrySession.lab.center = nextPoint;
+      else geometrySession.lab.offset = nextPoint;
+      renderGeometryLab();
+    };
+    const finish = () => {
+      geometrySession.lab.drag = null;
+      window.removeEventListener('pointermove',move);
+      window.removeEventListener('pointerup',finish);
+      window.removeEventListener('pointercancel',finish);
+    };
+    window.addEventListener('pointermove',move);
+    window.addEventListener('pointerup',finish);
+    window.addEventListener('pointercancel',finish);
   });
-  svg.addEventListener('pointermove', event => {
-    if (!geometrySession.lab.drag) return;
-    const point = screenToModel(svg,event);
-    if (geometrySession.lab.drag === 'center') geometrySession.lab.center = point;
-    else geometrySession.lab.offset = point;
-    renderGeometryLab();
-  });
-  const finish = () => { geometrySession.lab.drag = null; };
-  svg.addEventListener('pointerup', finish);
-  svg.addEventListener('pointercancel', finish);
 }
 
 function playGeometryLab() {
