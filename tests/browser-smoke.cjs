@@ -110,7 +110,7 @@ async function run() {
     });
     check(
       'Partidas anteriores migran a la nueva estructura',
-      migration.version === 2 && migration.xp2 === 3 && migration.coins2 === 6 && migration.hasProgress,
+      migration.version === 3 && migration.xp2 === 3 && migration.coins2 === 6 && migration.hasProgress,
       JSON.stringify(migration),
     );
 
