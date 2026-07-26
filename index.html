@@ -186,6 +186,43 @@
   </div>
 </div>
 
+<!-- ======== GEOMETRY ADVENTURE ======== -->
+<div class="screen" id="screen-geometry-modes">
+  <main class="geometry-shell">
+    <header class="geometry-header">
+      <button class="back-btn" onclick="showScreen('map')" aria-label="Volver al mapa">←</button>
+      <div>
+        <p class="geometry-kicker">Geometría Aventura</p>
+        <h2>🔄 El Reino de las Rotaciones</h2>
+      </div>
+      <div class="geometry-stars" id="geometry-stars" aria-label="Progreso de estrellas">☆☆☆</div>
+    </header>
+    <p class="geometry-intro">Descubre cómo giran las figuras alrededor de un centro sin cambiar su forma ni su tamaño. Horario significa girar como las manecillas del reloj; antihorario, hacia el lado contrario.</p>
+    <div class="geometry-mode-grid" id="geometry-mode-grid"></div>
+  </main>
+</div>
+
+<div class="screen" id="screen-geometry-activity">
+  <main class="geometry-shell geometry-activity-shell">
+    <header class="geometry-header">
+      <button class="back-btn" onclick="openGeometryWorld()" aria-label="Volver a modalidades">←</button>
+      <div>
+        <p class="geometry-kicker" id="geometry-mode-kicker">Geometría Aventura</p>
+        <h2 id="geometry-activity-title">Rotaciones</h2>
+      </div>
+      <div class="geometry-step" id="geometry-step"></div>
+    </header>
+    <section class="geometry-card" aria-live="polite">
+      <p class="geometry-instruction" id="geometry-instruction"></p>
+      <div id="geometry-controls" class="geometry-controls"></div>
+      <div id="geometry-board-wrap" class="geometry-board-wrap"></div>
+      <div id="geometry-options" class="geometry-options"></div>
+      <div id="geometry-feedback" class="geometry-feedback" role="status"></div>
+      <div id="geometry-actions" class="geometry-actions"></div>
+    </section>
+  </main>
+</div>
+
 <!-- ======== RESULTS SCREEN ======== -->
 <div class="screen" id="screen-results">
   <div style="text-align:center; max-width:400px; padding-bottom:90px;">
@@ -340,6 +377,8 @@
 <script src="js/data.js"></script>
 <script src="js/state.js"></script>
 <script src="js/questions.js"></script>
+<script src="js/geometry.js"></script>
+<script src="js/geometry-ui.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

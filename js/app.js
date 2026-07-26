@@ -19,6 +19,7 @@ function showHud(v, navVisible=v) {
 // SCREENS
 // ============================================================
 function showScreen(id, updateNav=true) {
+  if (typeof stopGeometryActivity === 'function' && id !== 'geometry-activity') stopGeometryActivity();
   const leavingQuiz = session.inProgress &&
     document.getElementById('screen-quiz').classList.contains('active') &&
     !['quiz', 'results'].includes(id);
@@ -31,8 +32,8 @@ function showScreen(id, updateNav=true) {
   }
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-'+id).classList.add('active');
-  const hudScreens = ['map','mode','quiz','results','shop','profile','flashcards'];
-  const navScreens = ['map','mode','results','shop','profile','flashcards'];
+  const hudScreens = ['map','mode','quiz','results','shop','profile','flashcards','geometry-modes','geometry-activity'];
+  const navScreens = ['map','mode','results','shop','profile','flashcards','geometry-modes'];
   showHud(hudScreens.includes(id), navScreens.includes(id));
   if (updateNav) {
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -158,21 +159,25 @@ function claimDaily() {
 function renderMap() {
   const container = document.getElementById('world-map');
   container.innerHTML = '';
-  WORLDS.forEach(w => {
-    const unlocked = gs.level >= w.minLevel;
-    const stars = gs.worldStars[w.id] || 0;
+  LEARNING_WORLDS.forEach(w => {
+    const unlocked = w.unlockedByDefault || gs.level >= w.minLevel;
+    const stars = w.type === 'geometry' ? gs.geometryProgress.stars : (gs.worldStars[w.id] || 0);
     const div = document.createElement('div');
     div.className = 'world-node' + (!unlocked ? ' locked' : '') + (stars > 0 ? ' completed' : '');
     div.innerHTML = `
       <span class="node-icon">${w.icon}</span>
       <div class="node-info">
         <div class="node-title">${w.title}</div>
-        <div class="node-desc">Tablas del ${w.tables.join(' y del ')} · Nivel ${w.minLevel}+</div>
+        <div class="node-desc">${w.type === 'geometry' ? `${w.subtitle} · ${w.difficulty}` : `Tablas del ${w.tables.join(' y del ')} · Nivel ${w.minLevel}+`}</div>
       </div>
       <div>${unlocked ? (stars > 0 ? '⭐'.repeat(stars) + '☆'.repeat(3-stars) : '▶') : '🔒'}</div>
     `;
     if (unlocked) {
       div.onclick = () => {
+        if (w.type === 'geometry') {
+          openGeometryWorld();
+          return;
+        }
         session.worldId = w.id;
         session.tables = w.tables;
         document.getElementById('mode-world-title').textContent = w.title;
@@ -886,6 +891,7 @@ function renderFcTableSelector() {
 // BOOT
 // ============================================================
 validateGameContent();
+validateGeometryContent();
 loadGs();
 updateHud();
 

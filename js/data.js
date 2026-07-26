@@ -179,12 +179,26 @@ function pixelSVG(reward, size=56) {
 }
 
 const WORLDS = [
-  { id:'w1', title:'Tierra del 2 y el 3', icon:'🌱', tables:[2,3], minLevel:1, difficulty:'inicial' },
-  { id:'w2', title:'Valle del 4 y el 5',  icon:'🌊', tables:[4,5], minLevel:2, difficulty:'básica' },
-  { id:'w3', title:'Bosque del 6 y el 7', icon:'🌲', tables:[6,7], minLevel:3, difficulty:'intermedia' },
-  { id:'w4', title:'Montaña del 8 y el 9',icon:'⛰️', tables:[8,9], minLevel:5, difficulty:'avanzada' },
-  { id:'w5', title:'Mundo del 10, 11 y 12',icon:'🌟',tables:[10,11,12], minLevel:7, difficulty:'maestra' },
+  { id:'w1', type:'multiplication', title:'Tierra del 2 y el 3', icon:'🌱', tables:[2,3], minLevel:1, difficulty:'inicial' },
+  { id:'w2', type:'multiplication', title:'Valle del 4 y el 5',  icon:'🌊', tables:[4,5], minLevel:2, difficulty:'básica' },
+  { id:'w3', type:'multiplication', title:'Bosque del 6 y el 7', icon:'🌲', tables:[6,7], minLevel:3, difficulty:'intermedia' },
+  { id:'w4', type:'multiplication', title:'Montaña del 8 y el 9',icon:'⛰️', tables:[8,9], minLevel:5, difficulty:'avanzada' },
+  { id:'w5', type:'multiplication', title:'Mundo del 10, 11 y 12',icon:'🌟',tables:[10,11,12], minLevel:7, difficulty:'maestra' },
 ];
+
+const GEOMETRY_WORLD = {
+  id:'geometry-rotations',
+  type:'geometry',
+  title:'Geometría Aventura',
+  subtitle:'El Reino de las Rotaciones',
+  icon:'🔄',
+  minLevel:1,
+  unlockedByDefault:true,
+  difficulty:'4° básico',
+  modes:['learn','choose','build','lab'],
+};
+
+const LEARNING_WORLDS = [...WORLDS, GEOMETRY_WORLD];
 
 const GAME_MODES = {
   classic:   { questionCount:10, factorStart:1, factorEnd:10, baseCoins:10, timedSeconds:0 },
@@ -194,12 +208,23 @@ const GAME_MODES = {
   typing:    { questionCount:10, factorStart:1, factorEnd:10, baseCoins:20, timedSeconds:0, typedAnswer:true },
 };
 
+const GEOMETRY_MODES = {
+  learn:  { title:'Aprende', icon:'🧭', description:'Observa el giro real y descubre qué se conserva.', reward:0 },
+  choose: { title:'Elige', icon:'🎯', description:'Encuentra la posición final correcta.', reward:5 },
+  build:  { title:'Construye', icon:'🧩', description:'Ubica los vértices después del giro.', reward:8 },
+  lab:    { title:'Laboratorio', icon:'🧪', description:'Explora figuras, centros, sentidos y ayudas.', reward:0 },
+};
+
 function getWorldConfig(worldId) {
   return WORLDS.find(world => world.id === worldId);
 }
 
 function getModeConfig(modeId) {
   return GAME_MODES[modeId];
+}
+
+function getLearningWorld(worldId) {
+  return LEARNING_WORLDS.find(world => world.id === worldId);
 }
 
 function validateGameContent() {
@@ -221,4 +246,12 @@ function validateGameContent() {
     }
     if (mode.factorStart > mode.factorEnd) throw new Error(`Rango de factores inválido para el modo ${id}`);
   });
+
+  if (worldIds.has(GEOMETRY_WORLD.id)) throw new Error(`Mundo duplicado: ${GEOMETRY_WORLD.id}`);
+  if (!GEOMETRY_WORLD.title || !GEOMETRY_WORLD.subtitle || !GEOMETRY_WORLD.icon) {
+    throw new Error('Configuración incompleta para Geometría Aventura');
+  }
+  if (!GEOMETRY_WORLD.modes.every(mode => GEOMETRY_MODES[mode])) {
+    throw new Error('Geometría Aventura contiene modalidades desconocidas');
+  }
 }

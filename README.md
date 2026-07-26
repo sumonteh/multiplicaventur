@@ -10,6 +10,7 @@ Juego educativo en español para practicar las tablas de multiplicar. Funciona d
 - Tienda de personajes, apariencias, premios y ayudas.
 - Recompensa diaria, experiencia, niveles y colección de premios.
 - Diseño adaptable para teléfonos y computadores.
+- Geometría Aventura con rotaciones visuales en cuadrícula.
 
 ## Ejecutar localmente
 
@@ -29,12 +30,17 @@ css/styles.css          Diseño, responsive, animaciones y accesibilidad.
 js/data.js              Mundos, modalidades, catálogo, premios y validación.
 js/state.js             Estado global, persistencia, migraciones y potenciadores.
 js/questions.js         Generación reutilizable de ejercicios sin duplicados.
+js/geometry.js          Figuras, ejercicios y motor matemático puro de rotaciones.
+js/geometry-ui.js       Tablero SVG y control de actividades geométricas visuales.
 js/app.js               Navegación, controladores de interfaz y ciclo de partida.
 tests/browser-smoke.cjs  Las 17 comprobaciones funcionales en navegador real.
+tests/geometry-smoke.cjs Comprobaciones matemáticas, visuales y de persistencia.
 package.json            Dependencias y comando de pruebas.
 ```
 
-Los mundos describen contenido y desbloqueo; las modalidades describen las reglas de cada partida. El motor de preguntas combina ambas configuraciones sin conocer pantallas o persistencia. La interfaz consume ese motor y delega el guardado en `state.js`.
+Los mundos describen contenido y desbloqueo; las modalidades describen las reglas de cada partida. `WORLDS` conserva exclusivamente los cinco mundos de multiplicación para no alterar sus 25 combinaciones verificadas. `LEARNING_WORLDS` añade mundos de otros tipos, como Geometría, y permite que la navegación elija el controlador apropiado.
+
+El motor de preguntas combina mundos de multiplicación y modalidades sin conocer pantallas o persistencia. De forma paralela, el motor puro de `geometry.js` calcula vértices, distancias, trayectorias y distractores; `geometry-ui.js` los representa en SVG. Esta separación permite reutilizar el tablero para futuras transformaciones sin introducirlas en el cuestionario de multiplicaciones.
 
 ## Añadir un mundo
 
@@ -54,6 +60,24 @@ Agrega una entrada a `WORLDS` dentro de `js/data.js`:
 Usa un `id` único, declara al menos una tabla válida y conserva los campos requeridos. No es necesario modificar el motor, la navegación ni las modalidades.
 
 Este ejemplo solo documenta el mecanismo de extensión; no registra un mundo nuevo en la aplicación.
+
+Para una actividad visual, registra además el mundo en `LEARNING_WORLDS` con un tipo estable y conecta un controlador especializado:
+
+```js
+const VISUAL_WORLD = {
+  id: 'visual-example',
+  type: 'visual',
+  title: 'Mundo visual',
+  icon: '🔷',
+  minLevel: 1,
+  unlockedByDefault: true,
+  modes: ['learn'],
+};
+
+const LEARNING_WORLDS = [...WORLDS, VISUAL_WORLD];
+```
+
+El ejemplo no implementa ningún contenido adicional. Las respuestas calculables deben permanecer en un motor independiente de la interfaz.
 
 ## Añadir una modalidad
 
@@ -80,6 +104,7 @@ El estado se guarda en `localStorage` con la clave `multiadv_gs`. `DEFAULT_STATE
 - Vida Extra, Escudo e Imán se consumen cuando se activan.
 - El dominio de cada tabla se calcula con respuestas reales por multiplicación.
 - Las marcas de las tarjetas de repaso se conservan entre sesiones.
+- Geometría guarda acceso, modalidad actual, ejercicios completados, mejores resultados, estrellas, ayudas utilizadas y progreso total.
 
 ## Migraciones
 
@@ -94,7 +119,7 @@ Nunca reemplaces directamente una partida anterior sin pasar por `migrateState()
 
 ## Validar configuraciones
 
-`validateGameContent()` se ejecuta al iniciar y detiene configuraciones inválidas. Comprueba mundos duplicados, campos incompletos, tablas fuera de rango, cantidades de preguntas y rangos de factores.
+`validateGameContent()` se ejecuta al iniciar y detiene configuraciones inválidas. Comprueba mundos duplicados, campos incompletos, tablas fuera de rango, cantidades de preguntas y rangos de factores. `validateGeometryContent()` comprueba identificadores, modalidades, figuras, vértices, ángulos, sentidos, conservación de distancias y las cantidades iniciales de actividades.
 
 El motor también rechaza una modalidad que solicite más preguntas que combinaciones únicas disponibles. Ejecuta las pruebas después de modificar `WORLDS` o `GAME_MODES`.
 
@@ -112,7 +137,7 @@ Ejecuta:
 npm test
 ```
 
-La prueba levanta un servidor local temporal, abre Chromium y ejecuta exactamente 17 comprobaciones:
+La prueba levanta un servidor local temporal y abre Chromium. Primero ejecuta exactamente las 17 comprobaciones históricas:
 
 - carga inicial y creación de jugador;
 - configuración de mundos y modalidades;
@@ -126,4 +151,17 @@ La prueba levanta un servidor local temporal, abre Chromium y ejecuta exactament
 - vista móvil a 375 × 667;
 - ausencia de errores de ejecución.
 
-Las capturas resultantes se guardan en `docs/screenshots/desktop.png` y `docs/screenshots/mobile.png`.
+Después ejecuta las comprobaciones de Geometría: motor de 90°, 180°, 270° y 360°; centro fuera del origen; conservación de distancias; catálogo y alternativas; migración; persistencia; navegación; SVG; vista móvil y errores de ejecución.
+
+Las capturas resultantes se guardan en `docs/screenshots/desktop.png`, `mobile.png`, `geometry-desktop.png` y `geometry-mobile.png`.
+
+## Geometría Aventura
+
+El mundo `geometry-rotations` está disponible por defecto y ofrece:
+
+- **Aprende:** tres demostraciones, controles de ángulo y sentido, animación alrededor del centro real y ayudas visuales.
+- **Elige:** seis ejercicios con tres posiciones y explicaciones específicas para los errores.
+- **Construye:** cuatro ejercicios táctiles para marcar vértices en orden y comparar con la solución.
+- **Laboratorio:** triángulo, cuadrado, rectángulo o figura irregular; centro y figura móviles; cuadrícula, radios, trayectorias y fantasma configurables.
+
+Las coordenadas del modelo usan Y positiva hacia arriba. Solo `modelToScreen()` invierte Y para SVG, donde la coordenada vertical crece hacia abajo. Así se evita invertir accidentalmente los sentidos horario y antihorario.

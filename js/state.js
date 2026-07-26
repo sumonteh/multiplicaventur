@@ -2,7 +2,7 @@
 // GAME STATE
 // ============================================================
 const DEFAULT_STATE = {
-  version: 2,
+  version: 3,
   name: '',
   coins: 0,
   xp: 0,
@@ -21,6 +21,15 @@ const DEFAULT_STATE = {
   totalGames: 0,
   tableProgress: {},
   flashcardProgress: {},
+  geometryProgress: {
+    unlocked: true,
+    currentMode: 'learn',
+    completed: { learn:[], choose:[], build:[] },
+    bestScores: { choose:0, build:0 },
+    stars: 0,
+    helpsUsed: 0,
+    totalCompleted: 0,
+  },
 };
 
 let gs = JSON.parse(JSON.stringify(DEFAULT_STATE));
@@ -36,6 +45,23 @@ function migrateState(saved) {
     ['xp2', 'coins2'].forEach(id => {
       if (migrated.ownedItems[id] > 0) migrated.ownedItems[id] *= 3;
     });
+  }
+
+  if (previousVersion < 3 || !saved.geometryProgress) {
+    migrated.geometryProgress = JSON.parse(JSON.stringify(DEFAULT_STATE.geometryProgress));
+  } else {
+    migrated.geometryProgress = Object.assign(
+      JSON.parse(JSON.stringify(DEFAULT_STATE.geometryProgress)),
+      saved.geometryProgress,
+    );
+    migrated.geometryProgress.completed = Object.assign(
+      { learn:[], choose:[], build:[] },
+      saved.geometryProgress.completed || {},
+    );
+    migrated.geometryProgress.bestScores = Object.assign(
+      { choose:0, build:0 },
+      saved.geometryProgress.bestScores || {},
+    );
   }
 
   migrated.tableProgress = saved.tableProgress && typeof saved.tableProgress === 'object' ? saved.tableProgress : {};
